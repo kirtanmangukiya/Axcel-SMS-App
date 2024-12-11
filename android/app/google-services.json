@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "13336672486",
+    "project_id": "axcelhybrid",
+    "storage_bucket": "axcelhybrid.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:13336672486:android:226a5be865618c3ab52327",
+        "android_client_info": {
+          "package_name": "com.mynew1212"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "13336672486-atdma1okmr2p1pedeot65lei56tjphph.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mynew1212",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "13336672486-1h1vkekqcr6tr19ah1qk112ag75ock9i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeTXkzB9Polna6HfilQTEihmga_rUYG_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "13336672486-1h1vkekqcr6tr19ah1qk112ag75ock9i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
