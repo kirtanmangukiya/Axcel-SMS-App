@@ -96,16 +96,16 @@ console.log('tokenStringtokenStringtokenString',tokenString);
       const data = await DueInvoiceData(); // Directly call the API function
       // console.log('Data of invoice:', data);
 
-      // Safeguard: Ensure data exists and has 'invoices2' field
-      if (!data || !data.invoices2) {
+      // Safeguard: Ensure data exists and has 'invoices' field
+      if (!data || !data.invoices) {
         console.error(
-          'Data or invoices2 field is missing in the response:',
+          'Data or invoices field is missing in the response:',
           data,
         );
         return;
       }
 
-      const invoices = data.invoices2 || [];
+      const invoices = data.invoices || [];
 
       const dueInvoices = invoices.filter(
         (invoice: {

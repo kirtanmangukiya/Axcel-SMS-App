@@ -408,10 +408,15 @@ const SideBarAdmin: FC<SideBarProps> = props => {
           </MenuItem2>
           <MenuItem2
             style={styles.menuItem}
-            onPress={() => {
+            onPress={async () => {
               // Pass the URL to the external WebView screen via navigation params
+              const token1 = await AsyncStorage.getItem('token1');
+              const lev = await AsyncStorage.getItem('lev');
+
+              console.log('uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu',`https://axcellibrary.schoolmgmtsys.com/?tok=${token1}&lev${lev}`);
+              
               navigation.navigate('RouteExternalUrlScreen', {
-                url: 'https://axcellibrary.schoolmgmtsys.com',
+                url: `https://axcellibrary.schoolmgmtsys.com/?tok=${token1}&lev${lev}`,
               });
               refreshRender(
                 'Navigating to external website inside the app',

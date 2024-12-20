@@ -137,6 +137,20 @@ const LoginScreen: React.FC = () => {
         fcmToken,
       );
 
+      //set the token1 and level values
+      const randomNum =
+        Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+      const token = `XYZGHIJKJHHHHH${randomNum}XYZGHIJKJHHHHH`;
+      await AsyncStorage.setItem('token1', token);
+
+      let userLevel = 'B'; // Default value
+      if (response?.user?.sector?.toLowerCase() === 'secondary') {
+        userLevel = 'S';
+      } else if (response?.user?.sector?.toLowerCase() === 'primary') {
+        userLevel = 'P';
+      }
+      await AsyncStorage.setItem('lev', userLevel);
+
       await AsyncStorage.setItem('loginData', JSON.stringify(response));
       saveAccount({username, password});
 

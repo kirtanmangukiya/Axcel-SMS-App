@@ -714,7 +714,7 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
     }
 
     // Make the API request
-    const response = await fetch(`${BASE_URL}/invoices2/listAll`, {
+    const response = await fetch(`${BASE_URL}/invoices/listAll`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -736,7 +736,7 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
     if (text.trim() !== '') {
       try {
         const data = JSON.parse(text);
-        // console.log('Parsed API Response:', data);
+        console.log('Parsed API Response:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::', data);
         return data; // Return the parsed data
       } catch (jsonError) {
         console.error('JSON parse error:', jsonError, 'Response text:', text);
