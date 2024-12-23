@@ -713,8 +713,13 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
       throw new Error('AUTH_TOKEN is not available');
     }
 
+    const params = new URLSearchParams({
+      "searchInput[dueInv]": true,
+      "page": 1
+    });
+
     // Make the API request
-    const response = await fetch(`${BASE_URL}/invoices/listAll`, {
+    const response = await fetch(`${BASE_URL}/invoices/listAll?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

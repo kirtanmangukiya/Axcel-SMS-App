@@ -89,7 +89,6 @@ const DueInvoice: React.FC = () => {
       if (!tokenString) {
         throw new Error('No token found');
       }
-console.log('tokenStringtokenStringtokenString',tokenString);
 
       const loginData = JSON.parse(tokenString);
 
@@ -107,28 +106,28 @@ console.log('tokenStringtokenStringtokenString',tokenString);
 
       const invoices = data.invoices || [];
 
-      const dueInvoices = invoices.filter(
-        (invoice: {
-          fullName: null;
-          paymentStatus: number;
-          dueDate: {split: (arg0: string) => [any, any, any]};
-          invoicePyaments: {paymentStatus: number}[];
-        }) => {
-          // Current time in seconds
-          const currentTime = Math.floor(Date.now() / 1000);
-          const [month, day, year] = invoice.dueDate.split('/');
+      // const dueInvoices = invoices.filter(
+      //   (invoice: {
+      //     fullName: null;
+      //     paymentStatus: number;
+      //     dueDate: {split: (arg0: string) => [any, any, any]};
+      //     invoicePyaments: {paymentStatus: number}[];
+      //   }) => {
+      //     // Current time in seconds
+      //     const currentTime = Math.floor(Date.now() / 1000);
+      //     const [month, day, year] = invoice.dueDate.split('/');
 
-          // Create a Date object with the appropriate month (0-indexed)
-          const dueDate = new Date(
-            Number(year),
-            Number(month) - 1,
-            Number(day),
-          );
-          const dueDateTimestamp = Math.floor(dueDate.getTime() / 1000);
-          // const paymentStatus = invoice.invoicePyaments?.[0]?.paymentStatus;
-          return dueDateTimestamp < currentTime && invoice?.paymentStatus !== 1;
-        },
-      );
+      //     // Create a Date object with the appropriate month (0-indexed)
+      //     const dueDate = new Date(
+      //       Number(year),
+      //       Number(month) - 1,
+      //       Number(day),
+      //     );
+      //     const dueDateTimestamp = Math.floor(dueDate.getTime() / 1000);
+      //     // const paymentStatus = invoice.invoicePyaments?.[0]?.paymentStatus;
+      //     return dueDateTimestamp < currentTime && invoice?.paymentStatus !== 1;
+      //   },
+      // );
     
       setInvoiceData(invoices);
     } catch (error) {
