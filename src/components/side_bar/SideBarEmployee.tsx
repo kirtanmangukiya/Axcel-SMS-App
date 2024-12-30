@@ -141,6 +141,7 @@ const SideBarEmployee: FC<SideBarProps> = props => {
     try {
       await AsyncStorage.clear(); // Clear all data from AsyncStorage
       // AUTH_TOKEN = null; // Clear the in-memory token
+      Alert.alert('Success', 'Logout successfully');
       navigation.navigate('Login'); // Navigate to the Login screen
     } catch (error) {
       console.error('Failed to clear AsyncStorage on logout:', error);

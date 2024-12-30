@@ -9,12 +9,11 @@ import {
 } from 'react-native';
 import {
   DrawerActions,
-  StackActions,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
 import {InvoiceItemResponce, MainStackParamList} from '../../types';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState, useRef} from 'react';
 
 import ActivityIndacatorr from '../../components/activity_indicator/ActivityIndacatorr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,29 +40,13 @@ const DueInvoice: React.FC = () => {
   const [invoiceData, setInvoiceData] = useState<InvoiceItemResponce[]>(
     results || [],
   );
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const [appState, setAppState] = useState(AppState.currentState);
+  const appStateRef = useRef(AppState.currentState);
+  const hasDataLoaded = useRef(false);
 
-  useEffect(() => {
-    if (!results) {
-      checkInternetAndFetchData();
-    }
-
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        checkInternetAndFetchData();
-      }
-      setAppState(nextAppState);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [appState, results]);
-
-  const checkInternetAndFetchData = async () => {
+  const loadData = async (isRefresh = false) => {
+    if (!isRefresh && hasDataLoaded.current) return;
+    
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isConnected) {
       Toast.show({
@@ -76,13 +59,7 @@ const DueInvoice: React.FC = () => {
       return;
     }
 
-    if (!results) {
-      loadData();
-    }
-  };
-
-  const loadData = async () => {
-    setLoading(true); // Start loading indicator
+    if (!isRefresh && results) return;
 
     try {
       const tokenString = await AsyncStorage.getItem('loginData');
@@ -90,46 +67,16 @@ const DueInvoice: React.FC = () => {
         throw new Error('No token found');
       }
 
-      const loginData = JSON.parse(tokenString);
+      setLoading(true);
+      const data = await DueInvoiceData();
 
-      const data = await DueInvoiceData(); // Directly call the API function
-      // console.log('Data of invoice:', data);
-
-      // Safeguard: Ensure data exists and has 'invoices' field
       if (!data || !data.invoices) {
-        console.error(
-          'Data or invoices field is missing in the response:',
-          data,
-        );
+        console.error('Data or invoices field is missing in the response:', data);
         return;
       }
 
-      const invoices = data.invoices || [];
-
-      // const dueInvoices = invoices.filter(
-      //   (invoice: {
-      //     fullName: null;
-      //     paymentStatus: number;
-      //     dueDate: {split: (arg0: string) => [any, any, any]};
-      //     invoicePyaments: {paymentStatus: number}[];
-      //   }) => {
-      //     // Current time in seconds
-      //     const currentTime = Math.floor(Date.now() / 1000);
-      //     const [month, day, year] = invoice.dueDate.split('/');
-
-      //     // Create a Date object with the appropriate month (0-indexed)
-      //     const dueDate = new Date(
-      //       Number(year),
-      //       Number(month) - 1,
-      //       Number(day),
-      //     );
-      //     const dueDateTimestamp = Math.floor(dueDate.getTime() / 1000);
-      //     // const paymentStatus = invoice.invoicePyaments?.[0]?.paymentStatus;
-      //     return dueDateTimestamp < currentTime && invoice?.paymentStatus !== 1;
-      //   },
-      // );
-    
-      setInvoiceData(invoices);
+      setInvoiceData(data.invoices);
+      hasDataLoaded.current = true;
     } catch (error) {
       console.error('Error loading data:', error);
       Toast.show({
@@ -138,19 +85,40 @@ const DueInvoice: React.FC = () => {
         text2: 'Failed to load data from the server.',
       });
     } finally {
-      setLoading(false); // Stop loading indicator
-      setRefreshing(false); // Stop refreshing indicator if using pull-to-refresh
+      setLoading(false);
+      setRefreshing(false);
+      setLoadingMore(false);
     }
   };
+
+  useEffect(() => {
+    if (!results && !hasDataLoaded.current) {
+      loadData();
+    }
+
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextAppState === 'active' &&
+        !hasDataLoaded.current
+      ) {
+        loadData();
+      }
+      appStateRef.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [results]);
 
   const handleRefreshPress = useCallback(() => {
     if (route.params) {
       route.params.results = undefined;
     }
     setRefreshing(true);
-    setPage(1); // Reset the page to 1 when refreshing
-    setHasMore(true); // Reset the hasMore flag when refreshing
-    loadData(); // Load data regardless of the initial results
+    hasDataLoaded.current = false;
+    loadData(true);
   }, []);
 
   const handleMenuPress = useCallback(() => {
@@ -160,10 +128,10 @@ const DueInvoice: React.FC = () => {
   const renderItem = useCallback(
     ({item}: {item: InvoiceItemResponce}) => (
       <View style={{marginVertical: 10, marginHorizontal: 15}}>
-        <InvoiceComponent data={item} />
+        <InvoiceComponent data={item} onInvoiceChange={handleRefreshPress} />
       </View>
     ),
-    [],
+    [handleRefreshPress],
   );
 
   const renderContent = useMemo(() => {
@@ -184,41 +152,25 @@ const DueInvoice: React.FC = () => {
     }
 
     return (
-      <>
-        <FlatList
-          data={invoiceData}
-          renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              colors={['#ffffff']}
-              refreshing={refreshing}
-              onRefresh={handleRefreshPress}
-            />
-          }
-          onEndReached={() => loadData(true)}
-          onEndReachedThreshold={0.5}
-          initialNumToRender={10}
-          windowSize={21}
-          maxToRenderPerBatch={10}
-        />
-        {loadingMore && invoiceData.length > 0 && (
-          <View style={styles.footer}>
-            <ActivityIndicator size="large" color="#ffffff" />
-          </View>
-        )}
-      </>
+      <FlatList
+        data={invoiceData}
+        renderItem={renderItem}
+        keyExtractor={item => item.id.toString()}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            colors={['#ffffff']}
+            refreshing={refreshing}
+            onRefresh={handleRefreshPress}
+          />
+        }
+        initialNumToRender={10}
+        windowSize={21}
+        maxToRenderPerBatch={10}
+      />
     );
-  }, [
-    loading,
-    invoiceData,
-    refreshing,
-    loadingMore,
-    handleRefreshPress,
-    renderItem,
-  ]);
+  }, [loading, invoiceData, refreshing, handleRefreshPress, renderItem]);
 
   return (
     <ImageBackground
@@ -228,7 +180,7 @@ const DueInvoice: React.FC = () => {
         <TopBar
           title="Due Invoices"
           onSearchPress={handleRefreshPress}
-          onMenuPress={!results ? handleMenuPress : null}
+          onMenuPress={!results ? handleMenuPress : undefined}
         />
         <View style={styles.content}>{renderContent}</View>
       </View>
@@ -258,11 +210,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 10,
-  },
-  footer: {
-    paddingVertical: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 

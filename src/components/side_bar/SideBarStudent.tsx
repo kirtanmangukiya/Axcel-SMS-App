@@ -156,7 +156,7 @@ const SideBarStudent: FC<SideBarProps> = props => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('loginData');
-      // props.navigation.navigate('Splash', {confirmation: true});
+      Alert.alert('Success', 'User successfully logged out');
       navigation.navigate('Login');
     } catch (error) {
       Alert.alert(
