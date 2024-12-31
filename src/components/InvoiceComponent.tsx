@@ -347,7 +347,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
           </View>
         </View>
         <Text style={styles.paymentStatus}>
-          {data?.paymentStatus === 1 ? 'PAID' : data?.paymentStatus === 2 ? 'PARTIALLY PAID' : 'UNPAID'}
+          {data?.invoicePyaments?.[0]?.paymentStatus === 1 ? 'PAID' : data?.invoicePyaments?.[0]?.paymentStatus === 2 ? 'PARTIALLY PAID' : 'UNPAID'}
         </Text>
         <TouchableOpacity
           style={[styles.button, {marginLeft: '10%'}]}
