@@ -19,19 +19,16 @@ const WebViewComponent: React.FC<WebViewComponentProps> = ({route}) => {
   const {url} = route.params;
   const navigation = useNavigation();
 
-  const handleNavigationStateChange = (navState: any) => {
-    if (navState.url !== url) {
-      navigation.goBack();
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <TopBar title="Axcel SMS" />
       <WebView
         source={{uri: url}}
         style={styles.webview}
-        onNavigationStateChange={handleNavigationStateChange}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        scalesPageToFit={true}
       />
     </SafeAreaView>
   );

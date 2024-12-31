@@ -411,27 +411,36 @@ const SideBarAdmin: FC<SideBarProps> = props => {
             <MenuText style={styles.menuItemText}>Books Library</MenuText>
           </MenuItem2>
           <MenuItem2
-            style={styles.menuItem}
-            onPress={async () => {
-              // Pass the URL to the external WebView screen via navigation params
-              const token1 = await AsyncStorage.getItem('token1');
-              const lev = await AsyncStorage.getItem('lev');
+  style={styles.menuItem}
+  onPress={async () => {
+    try {
+      const token1 = await AsyncStorage.getItem('token1');
+      const sessionUrl = `https://axcellibrary.schoolmgmtsys.com/`;
 
-              console.log('uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu',`https://axcellibrary.schoolmgmtsys.com/?tok=${token1}&lev${lev}`);
-              
-              navigation.navigate('RouteExternalUrlScreen', {
-                url: `https://axcellibrary.schoolmgmtsys.com/?tok=${token1}&lev${lev}`,
-              });
-              refreshRender(
-                'Navigating to external website inside the app',
-                'WebViewScreen',
-              );
-            }}>
-            <View style={{width: '20%'}}>
-              <FontAwesome name="link" size={30} color="#ffffff" />
-            </View>
-            <MenuText style={styles.menuItemText}>eLibrary</MenuText>
-          </MenuItem2>
+      console.log('Navigating to WebViewComponent with URL:', sessionUrl);
+      
+      // Correct navigation call
+      navigation.navigate('WebViewComponent', { url: sessionUrl });
+      
+      // Optional debug statement or function call
+      refreshRender(
+        'Navigating to external website inside the app',
+        'WebViewScreen'
+      );
+    } catch (error) {
+      console.error('Error navigating to WebView:', error);
+      Alert.alert(
+        'Error',
+        'Unable to open eLibrary. Please try again.'
+      );
+    }
+  }}
+>
+  <View style={{ width: '20%' }}>
+    <FontAwesome name="link" size={30} color="#ffffff" />
+  </View>
+  <MenuText style={styles.menuItemText}>eLibrary</MenuText>
+</MenuItem2>
 
           <MenuItem2
             style={styles.menuItem}
