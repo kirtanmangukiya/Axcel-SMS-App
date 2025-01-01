@@ -227,7 +227,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
       }
 
       const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.images],
+        type: [DocumentPicker.types.allFiles],
       });
 
       if (res && res.length > 0) {
@@ -258,8 +258,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         Alert.alert('Error', 'Failed to pick the image');
       }
     }
-  }, [data, onInvoiceChange]);
-
+  }, [data, onInvoiceChange]);  
   if (sessionUrl) {
     return (
       <View style={styles.webviewContainer}>
