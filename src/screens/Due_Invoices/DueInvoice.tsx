@@ -9,11 +9,13 @@ import {
 } from 'react-native';
 import {
   DrawerActions,
+  StackActions,
   useNavigation,
   useRoute,
+  useIsFocused,
 } from '@react-navigation/native';
 import {InvoiceItemResponce, MainStackParamList} from '../../types';
-import React, {useCallback, useEffect, useMemo, useState, useRef} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 
 import ActivityIndacatorr from '../../components/activity_indicator/ActivityIndacatorr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,19 +36,59 @@ const DueInvoice: React.FC = () => {
   const navigation = useNavigation<InvoiceScreenNavigationProp>();
   const route = useRoute();
   const results = route.params?.results;
+  const isFocused = useIsFocused();
 
   const [loading, setLoading] = useState<boolean>(!results);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [invoiceData, setInvoiceData] = useState<InvoiceItemResponce[]>(
     results || [],
   );
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const appStateRef = useRef(AppState.currentState);
-  const hasDataLoaded = useRef(false);
+  const [appState, setAppState] = useState(AppState.currentState);
+  const [initialLoad, setInitialLoad] = useState(true);
 
-  const loadData = async (isRefresh = false) => {
-    if (!isRefresh && hasDataLoaded.current) return;
-    
+  const handleInvoiceChange = useCallback(() => {
+    handleRefreshPress();
+  }, []);
+
+  useEffect(() => {
+    if (isFocused) {
+      loadData();
+    }
+  }, [isFocused]);
+
+  useEffect(() => {
+    if (!results && initialLoad) {
+      checkInternetAndFetchData();
+      setInitialLoad(false);
+    }
+  }, [results, initialLoad]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.match(/inactive|background/) && 
+        nextAppState === 'active' && 
+        isFocused && 
+        !results
+      ) {
+        NetInfo.fetch().then(state => {
+          if (state.isConnected) {
+            loadData();
+          }
+        });
+      }
+      setAppState(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState, isFocused, results]);
+
+  const checkInternetAndFetchData = async () => {
     const netInfoState = await NetInfo.fetch();
     if (!netInfoState.isConnected) {
       Toast.show({
@@ -59,7 +101,17 @@ const DueInvoice: React.FC = () => {
       return;
     }
 
-    if (!isRefresh && results) return;
+    if (!results) {
+      loadData();
+    }
+  };
+
+  const loadData = async (loadMore = false) => {
+    if (!isFocused) return;
+    
+    if (!loadMore) {
+      setLoading(true);
+    }
 
     try {
       const tokenString = await AsyncStorage.getItem('loginData');
@@ -67,16 +119,20 @@ const DueInvoice: React.FC = () => {
         throw new Error('No token found');
       }
 
-      setLoading(true);
+      const loginData = JSON.parse(tokenString);
+
       const data = await DueInvoiceData();
 
       if (!data || !data.invoices) {
-        console.error('Data or invoices field is missing in the response:', data);
+        console.error(
+          'Data or invoices field is missing in the response:',
+          data,
+        );
         return;
       }
 
-      setInvoiceData(data.invoices);
-      hasDataLoaded.current = true;
+      const invoices = data.invoices || [];
+      setInvoiceData(invoices);
     } catch (error) {
       console.error('Error loading data:', error);
       Toast.show({
@@ -87,38 +143,17 @@ const DueInvoice: React.FC = () => {
     } finally {
       setLoading(false);
       setRefreshing(false);
-      setLoadingMore(false);
     }
   };
-
-  useEffect(() => {
-    if (!results && !hasDataLoaded.current) {
-      loadData();
-    }
-
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (
-        appStateRef.current.match(/inactive|background/) &&
-        nextAppState === 'active' &&
-        !hasDataLoaded.current
-      ) {
-        loadData();
-      }
-      appStateRef.current = nextAppState;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [results]);
 
   const handleRefreshPress = useCallback(() => {
     if (route.params) {
       route.params.results = undefined;
     }
     setRefreshing(true);
-    hasDataLoaded.current = false;
-    loadData(true);
+    setPage(1);
+    setHasMore(true);
+    loadData();
   }, []);
 
   const handleMenuPress = useCallback(() => {
@@ -128,10 +163,14 @@ const DueInvoice: React.FC = () => {
   const renderItem = useCallback(
     ({item}: {item: InvoiceItemResponce}) => (
       <View style={{marginVertical: 10, marginHorizontal: 15}}>
-        <InvoiceComponent data={item} onInvoiceChange={handleRefreshPress} />
+        <InvoiceComponent 
+          data={item} 
+          onInvoiceChange={handleInvoiceChange}
+          key={item.id + Date.now()} // Add a unique key that changes when data updates
+        />
       </View>
     ),
-    [handleRefreshPress],
+    [handleInvoiceChange],
   );
 
   const renderContent = useMemo(() => {
@@ -152,25 +191,42 @@ const DueInvoice: React.FC = () => {
     }
 
     return (
-      <FlatList
-        data={invoiceData}
-        renderItem={renderItem}
-        keyExtractor={item => item.id.toString()}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            colors={['#ffffff']}
-            refreshing={refreshing}
-            onRefresh={handleRefreshPress}
-          />
-        }
-        initialNumToRender={10}
-        windowSize={21}
-        maxToRenderPerBatch={10}
-      />
+      <>
+        <FlatList
+          data={invoiceData}
+          renderItem={renderItem}
+          keyExtractor={item => `${item.id}-${Date.now()}`} // Update keyExtractor to ensure uniqueness
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              colors={['#ffffff']}
+              refreshing={refreshing}
+              onRefresh={handleRefreshPress}
+            />
+          }
+          onEndReached={() => loadData(true)}
+          onEndReachedThreshold={0.5}
+          initialNumToRender={10}
+          windowSize={21}
+          maxToRenderPerBatch={10}
+          extraData={invoiceData} // Add extraData prop to force re-render when data changes
+        />
+        {loadingMore && invoiceData.length > 0 && (
+          <View style={styles.footer}>
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
+      </>
     );
-  }, [loading, invoiceData, refreshing, handleRefreshPress, renderItem]);
+  }, [
+    loading,
+    invoiceData,
+    refreshing,
+    loadingMore,
+    handleRefreshPress,
+    renderItem,
+  ]);
 
   return (
     <ImageBackground
@@ -180,7 +236,7 @@ const DueInvoice: React.FC = () => {
         <TopBar
           title="Due Invoices"
           onSearchPress={handleRefreshPress}
-          onMenuPress={!results ? handleMenuPress : undefined}
+          onMenuPress={!results ? handleMenuPress : null}
         />
         <View style={styles.content}>{renderContent}</View>
       </View>
@@ -210,6 +266,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 10,
+  },
+  footer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
