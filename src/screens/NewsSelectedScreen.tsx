@@ -142,8 +142,14 @@ const NewsSelectedScreen: React.FC<NewsSelectedScreenProps> = ({newsData}) => {
               </TouchableOpacity>
             </View>
           </View>
-          {newsData &&
-            newsData.map(item => <NewsComponent key={item.id} data={item} />)}
+                  {newsData &&
+                    [...newsData]
+                      .sort((a, b) => {
+                        const dateA = new Date(a.start.split('/').reverse().join('-'))
+                        const dateB = new Date(b.start.split('/').reverse().join('-'))
+                        return dateB.getTime() - dateA.getTime()
+                      })
+                      .map(item => <NewsComponent key={item.id} data={item} />)}
         </View>
       </ScrollView>
     </View>
