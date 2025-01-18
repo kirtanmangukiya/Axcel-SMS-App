@@ -40,6 +40,7 @@ const HeaderText = styled.Text`
 const SubHeaderText = styled.Text`
   font-size: ${screenWidth * 0.04}px;
   margin-bottom: ${screenHeight * 0.025}px;
+  color: black;
 `;
 
 const Row = styled.View`
@@ -65,6 +66,8 @@ const AboveDateText = styled.Text`
 
 const CurrentDateText = styled.Text`
   font-size: ${screenWidth * 0.04}px;
+  color: black;
+  font-weight: bold;
 `;
 
 interface BooksLibraryDataItem {

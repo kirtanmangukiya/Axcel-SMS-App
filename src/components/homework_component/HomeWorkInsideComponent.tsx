@@ -96,15 +96,15 @@ const HomeWorkInsideComponent: React.FC = () => {
     try {
       const res = await RNFetchBlob.config({
         fileCache: true,
-        appendExt: 'png', // Set the extension to 'png'
+        appendExt: 'png',
       }).fetch('GET', fileUrl);
 
-      const filePath = `${res.path()}/${fileName}`; // Append the static file name
+      const filePath = `${res.path()}/${fileName}`;
 
       Toast.show({
         type: 'success',
         text1: 'Download Complete',
-        text2: `File saved to ${filePath}`,
+        text2: `File saved to $src\components\homework_component\HomeWorkInsideComponent.tsx`,
       });
     } catch (error) {
       Toast.show({
@@ -207,7 +207,6 @@ const HomeWorkInsideComponent: React.FC = () => {
 
         <View style={styles.card}>
           <View style={styles.row}>
-            {/* <Icon name="account-circle" size={24} color="#FF9800" /> */}
             <Image
               source={
                 data?.id
@@ -236,7 +235,6 @@ const HomeWorkInsideComponent: React.FC = () => {
           </View>
 
           <View style={styles.row}>
-            {/* <Icon name="calendar-check" size={24} color="#4CAF50" /> */}
             <Image
               source={require('../../assest/icons/icon_pages_start_time.png')}
               style={{width: 30, height: 30}}
@@ -288,28 +286,14 @@ const HomeWorkInsideComponent: React.FC = () => {
           </View>
           <View style={styles.separator} />
           <View>
-            <Text style={{color: '#ffffffb9f'}}>Answers</Text>
+            <Text style={styles.sectionHeader}>Answers</Text>
           </View>
           <View style={styles.container2}>
             <View style={styles.answersContainer}>
               <View style={styles.rowContainer}>
                 <View style={styles.section}>
-                  <View
-                    style={{
-                      width: '100%',
-                      // backgroundColor: 'red',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        color: '#1bd62a',
-                        marginBottom: 10,
-                      }}>
-                      Applied
-                    </Text>
+                  <View style={styles.sectionTitleContainer}>
+                    <Text style={styles.appliedTitle}>Applied</Text>
                   </View>
                   <FlatList
                     data={transformedData2}
@@ -319,14 +303,8 @@ const HomeWorkInsideComponent: React.FC = () => {
                   />
                 </View>
                 <View style={styles.section}>
-                  <View
-                    style={{
-                      width: '100%',
-                      // backgroundColor: 'red',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                    <Text style={styles.answersTitle}>Not Yet Applied</Text>
+                  <View style={styles.sectionTitleContainer}>
+                    <Text style={styles.notAppliedTitle}>Not Yet Applied</Text>
                   </View>
                   <FlatList
                     data={transformedData}
@@ -358,7 +336,6 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header2: {
-    // backgroundColor: '#FF9800',
     padding: 15,
     borderRadius: 10,
     margin: 10,
@@ -384,7 +361,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 10,
     margin: 10,
-    padding: 10,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
@@ -394,29 +371,32 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   textContainer: {
-    marginLeft: 10,
+    marginLeft: 12,
+    flex: 1,
   },
   label: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 2,
   },
   value: {
     fontSize: 14,
+    color: '#666666',
   },
   separator: {
     height: 1,
-    backgroundColor: '#CCCCCC',
-    marginVertical: 10,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 12,
   },
   container2: {
-    // paddingHorizontal: 10,
     backgroundColor: '#ffffff',
   },
   answersContainer: {
-    marginTop: 20,
+    marginTop: 15,
   },
   rowContainer: {
     flexDirection: 'row',
@@ -424,23 +404,37 @@ const styles = StyleSheet.create({
   },
   section: {
     flex: 1,
-    // marginHorizontal: 5,
   },
-  answersTitle: {
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 10,
+  },
+  sectionTitleContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  appliedTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1bd62a',
+  },
+  notAppliedTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#eb3616',
-    marginBottom: 10,
   },
   studentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
-    // backgroundColor: 'red',
     marginRight: '20%',
-    // padding: 10,
     borderRadius: 10,
+    padding: 8,
   },
   studentInfo: {
     flexDirection: 'row',
@@ -450,17 +444,16 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    marginRight: 5,
+    marginRight: 8,
   },
   studentName: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#333333',
   },
   statusContainer: {
-    // paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    // backgroundColor: '#4CAF50',
   },
   flatList: {
     paddingBottom: 10,

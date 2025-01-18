@@ -221,9 +221,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: 'black',
   },
   subtitle: {
     fontSize: 14,
+    color: 'black',
   },
   downloadButton: {
     backgroundColor: '#007AFF',
