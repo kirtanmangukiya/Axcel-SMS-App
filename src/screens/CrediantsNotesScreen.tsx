@@ -71,8 +71,10 @@ const CredentialsNotesScreen: React.FC = () => {
   const handleRefreshPress = useCallback(() => {
     setShowFullData(true); // Force display of fullData on refresh
     setRefreshing(true);
+    setData(fullData); // Display full data after refresh
     loadData(); // Reload full data
-  }, []);
+  }, [fullData]);
+  
 
   const handleMenuPress = useCallback(() => {
     navigation.dispatch(DrawerActions.openDrawer());
@@ -146,8 +148,15 @@ const CredentialsNotesScreen: React.FC = () => {
     loadData();
 
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        loadData();
+      if (appState === 'background' && nextAppState === 'active') {
+        // Only refresh if the app was in background and is now active
+        const lastRefreshTime = Date.now();
+        const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+        if (lastRefreshTime - (global.lastRefreshTime || 0) > REFRESH_THRESHOLD) {
+          loadData();
+          global.lastRefreshTime = lastRefreshTime;
+        }
       }
       setAppState(nextAppState);
     });
@@ -155,7 +164,7 @@ const CredentialsNotesScreen: React.FC = () => {
     return () => {
       subscription.remove();
     };
-  }, [appState, results]);
+  }, []);
 
   return (
     <ImageBackground
