@@ -109,6 +109,8 @@ const SideBarAdmin: FC<SideBarProps> = props => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.clear(); // Clear all stored data
+      await AsyncStorage.removeItem('savedEmail');
+      await AsyncStorage.removeItem('savedPassword');
       Alert.alert('Success', 'Logout Successfully');
       navigation.reset({
         index: 0,

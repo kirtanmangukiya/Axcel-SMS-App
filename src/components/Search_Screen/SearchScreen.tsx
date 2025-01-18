@@ -137,7 +137,12 @@ const SearchScreen = () => {
   const handleSearch2 = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
 
       const filteredStudents = students.filter(student =>
         student.fullName?.toLowerCase().includes(searchText.toLowerCase()),
@@ -154,7 +159,12 @@ const SearchScreen = () => {
   const handleSearch3 = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
 
       const filteredStudents = students.filter(student =>
         student.fullName?.toLowerCase().includes(searchText.toLowerCase()),
@@ -261,7 +271,12 @@ const SearchScreen = () => {
   const handleMessagePress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.fullName?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -275,8 +290,13 @@ const SearchScreen = () => {
   const handlecreditNotesPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
-      const filteredInvoices = students.filter(invoice =>
+          setSearchTerms(prevTerms => {
+            if (!prevTerms.includes(searchText)) {
+              return [...prevTerms, searchText];
+            }
+            return prevTerms;
+          }); 
+         const filteredInvoices = students.filter(invoice =>
         invoice.fullName?.toLowerCase().includes(searchText.toLowerCase()),
       );
       const pushAction = StackActions.push('CredentialsNotesScreen', {
@@ -289,7 +309,12 @@ const SearchScreen = () => {
   const handleHomeWorkPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice?.homeworkTitle.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -305,7 +330,12 @@ const SearchScreen = () => {
   const handleBooksLibraryPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.bookName?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -322,7 +352,12 @@ const SearchScreen = () => {
   const YearScreenPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.className?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -340,7 +375,12 @@ const SearchScreen = () => {
 
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.subjectTitle?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -359,7 +399,12 @@ const SearchScreen = () => {
 
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.AssignTitle?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -374,7 +419,12 @@ const SearchScreen = () => {
   const newsBoardScreenPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.newsTitle?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -389,7 +439,12 @@ const SearchScreen = () => {
   const eventsScreenPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.eventTitle?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -406,7 +461,12 @@ const SearchScreen = () => {
   const transportScreenPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.transportTitle
           ?.toLowerCase()
@@ -422,7 +482,12 @@ const SearchScreen = () => {
   const GradeLevelPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.gradeName?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -436,7 +501,12 @@ const SearchScreen = () => {
   const hostelPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.hostelTitle?.toLowerCase().includes(searchText.toLowerCase()),
       );
@@ -450,7 +520,12 @@ const SearchScreen = () => {
   const ResourceAndGuidePress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => [...prevTerms, searchText]);
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
       const filteredInvoices = students.filter(invoice =>
         invoice.material_title
           ?.toLowerCase()

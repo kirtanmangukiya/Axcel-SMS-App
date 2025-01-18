@@ -106,9 +106,14 @@ const SideBarAdmin: FC<SideBarProps> = props => {
   const navigation = useNavigation();
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('loginData');
-      Alert.alert('Success', 'User successfully logged out');
-      props.navigation.navigate('Login'); // Navigate to login screen after logout
+      await AsyncStorage.clear(); // Clear all stored data
+      await AsyncStorage.removeItem('savedEmail');
+      await AsyncStorage.removeItem('savedPassword');
+      Alert.alert('Success', 'Logout Successfully');
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Login'}],
+      });
     } catch (error) {
       Alert.alert(
         'Error',

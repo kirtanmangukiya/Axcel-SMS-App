@@ -97,7 +97,7 @@ const EventComponent: React.FC<EventComponentProps> = ({data}) => {
           </NameText>
         </ChildComponent>
         <View>
-          <Text>{data?.eventDescription ? data.eventDescription : 'N/A'}</Text>
+          <Text style={{color:"black", fontWeight: 400}}>{data?.eventDescription ? data.eventDescription : 'N/A'}</Text>
         </View>
       </ProfileContainer>
       <InfoContainer width={width}>

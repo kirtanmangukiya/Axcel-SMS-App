@@ -16,91 +16,73 @@ import LottieView from 'lottie-react-native';
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 const Container = styled.View`
-  /* padding-left: 10px; */
-  /* padding-right: 100px; */
   background-color: white;
-  border-radius: 10px;
-
-  /* padding-left: 10px; */
-  /* margin: 10px 40px; */
+  border-radius: ${screenWidth * 0.03}px;
+  width: ${screenWidth * 0.9}px;
+  align-self: center;
+  margin-vertical: ${screenHeight * 0.01}px;
 `;
 
 const ProfileContainer = styled.View`
   align-items: center;
-
   flex-direction: row;
-  margin-bottom: 20px;
-  padding-left: 40px;
-  /* padding-right: 15px; */
-  margin-top: 10px;
+  margin-bottom: ${screenHeight * 0.02}px;
+  padding-left: ${screenWidth * 0.04}px;
+  margin-top: ${screenHeight * 0.01}px;
   justify-content: space-evenly;
-
-  /* width: 100; */
 `;
 
 const ProfileImage = styled.Image`
-  width: 69px;
-  height: 45px;
-  border-radius: 50px;
-  margin-bottom: 10px;
+  width: ${screenWidth * 0.18}px;
+  height: ${screenWidth * 0.18}px;
+  border-radius: ${screenWidth * 0.09}px;
+  margin-bottom: ${screenHeight * 0.01}px;
 `;
 
 const ProfileImage2 = styled.Image`
-  width: 28px;
-  height: 28px;
-  margin-right: 12px;
-  border-radius: 50px;
-  margin-bottom: 10px;
+  width: ${screenWidth * 0.07}px;
+  height: ${screenWidth * 0.07}px;
+  margin-right: ${screenWidth * 0.03}px;
+  border-radius: ${screenWidth * 0.035}px;
+  margin-bottom: ${screenHeight * 0.01}px;
 `;
 
 const NameText = styled.Text`
-  font-size: 18px;
-  bottom: 7px;
+  font-size: ${screenWidth * 0.045}px;
   color: black;
   font-weight: bold;
 `;
 
 const ProfileIcon = styled(Icon).attrs({
   name: 'person',
-  size: 20,
+  size: screenWidth * 0.05,
 })`
-  margin-top: 5px;
+  margin-top: ${screenHeight * 0.005}px;
 `;
 
 const InfoContainer = styled.View`
   flex-direction: row;
-  /* align-items: center; */
-  margin-left: 15px;
-  margin-bottom: 20px;
+  margin-left: ${screenWidth * 0.04}px;
+  margin-bottom: ${screenHeight * 0.02}px;
 `;
 
 const InfoTextContainer = styled.View`
   flex-direction: column;
-  box-flex-group: red;
-  /* margin-left: 10px; */
-  /* justify-content: space-evenly; */
-`;
-const MeritListShow = styled.View`
-  margin-left: 60px;
-  margin-bottom: 10px;
 `;
 
 const InfoText = styled.Text`
-  font-size: 16px;
-
-  bottom: 2px;
+  font-size: ${screenWidth * 0.04}px;
   font-weight: bold;
   color: black;
 `;
 
 const SubText = styled.Text`
-  font-size: 14px;
+  font-size: ${screenWidth * 0.035}px;
   color: gray;
 `;
+
 const ChildComponent = styled.View`
   flex-direction: column;
-
-  /* background-color: red; */
   justify-content: space-evenly;
 `;
 
@@ -109,7 +91,7 @@ interface TeacherProfileProps {
 }
 
 const TeacherComponent: React.FC<TeacherProfileProps> = ({data, userRole}) => {
-  // console.log('Hello teacher component ', username);
+  console.log('teacher component Data', data);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [leaderboardMessage, setLeaderboardMessage] = useState('');
   const [showLottie, setShowLottie] = useState(false);
@@ -168,46 +150,19 @@ const TeacherComponent: React.FC<TeacherProfileProps> = ({data, userRole}) => {
           source={
             data?.id ? {uri: imageUrl} : require('../../assest/icons/download.jpg')
           }
-          style={{width: 55, height: 58, borderRadius: 100}}
+          style={styles.profileImage}
         />
-        <View
-          style={{
-            width: '70%',
-            marginLeft: '5%',
-            // backgroundColor: 'yellow',
-            flexDirection: 'column',
-            // alignItems: 'center',
-            justifyContent: 'space-evenly',
-          }}>
+        <View style={styles.profileInfoContainer}>
           <NameText>{data?.fullName ? data?.fullName : 'N/A'}</NameText>
           <View>
-            <View
-              style={
-                {
-                  // backgroundColor: 'black',
-                  // flexDirection: 'row',
-                  // justifyContent: 'space-evenly',
-                }
-              }>
-              <TouchableOpacity
-                style={{
-                  paddingVertical: '3%',
-                  paddingHorizontal: 10,
-                  backgroundColor: '#2596be',
-                  borderRadius: 40,
-                  justifyContent: 'center',
-                  marginHorizontal: 5,
-                  alignItems: 'center',
-                  width: '17%',
-                }}
-                // onPress={() => navigation.navigate('showDataScreen')}
-                onPress={handleButtonClick}>
-                <Image
-                  source={require('../../assest/icons/3rd.png')}
-                  style={styles.iconImage}
-                />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleButtonClick}>
+              <Image
+                source={require('../../assest/icons/3rd.png')}
+                style={styles.iconImage}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -220,7 +175,7 @@ const TeacherComponent: React.FC<TeacherProfileProps> = ({data, userRole}) => {
 
         <InfoTextContainer>
           <InfoText>Username</InfoText>
-          <SubText> {data?.username ? data?.username : 'N/A'}</SubText>
+          <SubText>{data?.username ? data?.username : 'N/A'}</SubText>
         </InfoTextContainer>
       </InfoContainer>
 
@@ -235,13 +190,7 @@ const TeacherComponent: React.FC<TeacherProfileProps> = ({data, userRole}) => {
           <SubText>{data?.email ? data?.email : 'N/A'}</SubText>
         </InfoTextContainer>
       </InfoContainer>
-      {/* <MeritListShow>
-        <SubText> Merit : 0</SubText>
-        <SubText> Demerit : 0</SubText>
-        <SubText> Attendence : 0</SubText>
-        <SubText> Updated</SubText>
-      </MeritListShow> */}
-      {/* Modal for Input */}
+
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
@@ -281,73 +230,91 @@ const TeacherComponent: React.FC<TeacherProfileProps> = ({data, userRole}) => {
 
 export default TeacherComponent;
 const styles = StyleSheet.create({
+  profileWrapper: {
+    width: '90%',
+    marginBottom: screenHeight * 0.02,
+    marginTop: screenHeight * 0.02,
+    marginLeft: screenWidth * 0.05,
+    flexDirection: 'row',
+  },
+  profileImage: {
+    width: screenWidth * 0.15,
+    height: screenWidth * 0.15,
+    borderRadius: screenWidth * 0.075,
+  },
+  profileInfoContainer: {
+    width: '70%',
+    marginLeft: screenWidth * 0.05,
+    flexDirection: 'column',
+    justifyContent: 'space-evenly',
+  },
+  iconButton: {
+    paddingVertical: screenHeight * 0.01,
+    paddingHorizontal: screenWidth * 0.025,
+    backgroundColor: '#2596be',
+    borderRadius: screenWidth * 0.1,
+    justifyContent: 'center',
+    marginHorizontal: screenWidth * 0.01,
+    alignItems: 'center',
+    width: screenWidth * 0.12,
+  },
+  iconImage: {
+    width: screenWidth * 0.05,
+    height: screenWidth * 0.08,
+    resizeMode: 'contain',
+  },
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  iconImage: {
-    width: screenWidth * 0.05,
-    height: screenHeight * 0.03,
-  },
-
   modalContainer: {
-    width: 300,
-    padding: 20,
+    width: screenWidth * 0.8,
+    padding: screenWidth * 0.05,
     backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  lottieModalContainer: {
-    width: 200,
-    height: 200,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    justifyContent: 'center',
+    borderRadius: screenWidth * 0.03,
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: screenHeight * 0.01,
   },
   textInput: {
     width: '100%',
-    height: 40,
+    height: screenHeight * 0.05,
     borderColor: 'gray',
     borderWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    marginBottom: screenHeight * 0.02,
+    paddingHorizontal: screenWidth * 0.03,
+    borderRadius: screenWidth * 0.02,
   },
   modalBackground2: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   lottieModalContainer2: {
-    width: 250, // Increased width
-    padding: 10, // Increased padding
+    width: screenWidth * 0.7,
+    padding: screenWidth * 0.03,
     backgroundColor: 'white',
-    borderRadius: 15, // Adjusted for larger modal
+    borderRadius: screenWidth * 0.04,
     alignItems: 'center',
   },
   lottieView2: {
-    width: 60, // Adjust size as needed
-    height: 60, // Adjust size as needed
+    width: screenWidth * 0.15,
+    height: screenWidth * 0.15,
   },
   message2: {
-    marginVertical: 20, // Increased spacing from the LottieView
-    fontSize: 18, // Adjust font size as needed
+    marginVertical: screenHeight * 0.02,
+    fontSize: screenWidth * 0.045,
     fontWeight: 'bold',
   },
   okButton: {
     color: 'blue',
     fontWeight: 'bold',
-  },
-  lottieView: {
-    width: 150,
-    height: 150,
+    fontSize: screenWidth * 0.04,
   },
 });
