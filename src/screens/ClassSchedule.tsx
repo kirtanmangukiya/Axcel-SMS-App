@@ -142,7 +142,7 @@ const ClassSchedule: React.FC = () => {
                       key={key}
                       label={value}
                       value={key}
-                      color="grey"
+                      color="white"
                     />
                   ))}
                 </Picker>
@@ -174,7 +174,7 @@ const ClassSchedule: React.FC = () => {
                         key={section.id}
                         label={section.sectionName}
                         value={section.sectionName}
-                        color="grey"
+                        color="white"
                       />
                     ))}
                   </Picker>
