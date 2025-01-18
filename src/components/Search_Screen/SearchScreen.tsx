@@ -180,49 +180,33 @@ const SearchScreen = () => {
   };
 
   const handleInvoicePress = () => {
-    // console.log('Search initiated with text:', searchText);
-
-    if (searchText) {
-      // Save the search term and update search history
-      saveSearchTerm(searchText);
-      setSearchTerms(prevTerms => {
-        console.log('Previous search terms:', prevTerms);
-        return [...prevTerms, searchText];
-      });
-
-      // Filter the invoices based on the searchText
-      const filteredInvoices = students.filter(invoice => {
-        const paymentTitleMatch = invoice.invoicePyaments?.[0]?.paymentTitle
-          ?.toLowerCase()
-          .includes(searchText.toLowerCase());
-
-        // Log each invoice and whether it matches the search
-        // console.log('Checking invoice:', invoice);
-        // console.log('Payment title match:', paymentTitleMatch);
-
-        return paymentTitleMatch;
-      });
-
-      // console.log('Filtered invoices:', filteredInvoices);
-
-      // Navigate to InvoiceScreen with the filtered invoices
-      const pushAction = StackActions.push('InvoiceScreen', {
-        results: filteredInvoices,
-      });
-
-      // console.log(
-      //   'Navigating to InvoiceScreen with results:',
-      //   filteredInvoices,
-      // );
-      navigation.dispatch(pushAction);
-
-      // Clear the search text after search is complete
-      setSearchText('');
-      // console.log('Search text cleared');
-    } else {
-      // console.log('No search text entered');
+    if (!searchText) {
+      console.log('No search text entered');
+      return;
     }
+  
+    // Save the search term and update search history
+    saveSearchTerm(searchText);
+    setSearchTerms(prevTerms => [...prevTerms, searchText]);
+  
+    // Filter the invoices based on the searchText
+    const filteredInvoices = students.filter(invoice => {
+      const paymentTitle = invoice.invoicePyaments?.[0]?.paymentTitle?.toLowerCase();
+      const isMatch = paymentTitle?.includes(searchText.toLowerCase());
+      return isMatch;
+    });
+  
+    // Navigate to InvoiceScreen with the filtered invoices
+    navigation.dispatch(
+      StackActions.push('InvoiceScreen', {
+        results: filteredInvoices,
+      })
+    );
+  
+    // Clear the search text after search is complete
+    setSearchText('');
   };
+  
 
   const handleDueInvoicePress = () => {
     // console.log('Search initiated with text:', searchText);

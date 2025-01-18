@@ -42,16 +42,17 @@ const InvoiceScreen: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [isFiltered, setIsFiltered] = useState<boolean>(!!results); // Added state
   const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
   const FETCH_COOLDOWN = 300000; // 5 minutes in milliseconds
 
   useEffect(() => {
-    if (!results && !invoiceData.length) {
+    if (!isFiltered && !results && !invoiceData.length) {
       checkInternetAndFetchData(false);
     }
 
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
+      if (!isFiltered && nextAppState === 'active') {
         const currentTime = Date.now();
         if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
           setLastFetchTime(currentTime);
@@ -63,23 +64,28 @@ const InvoiceScreen: React.FC = () => {
     return () => {
       subscription.remove();
     };
-  }, [results, lastFetchTime]);
+  }, [isFiltered, results, lastFetchTime]);
 
-  const checkInternetAndFetchData = useCallback(async (isPagination: boolean) => {
-    const netInfoState = await NetInfo.fetch();
-    if (!netInfoState.isConnected) {
-      Toast.show({
-        type: 'error',
-        text1: 'Network Error',
-        text2: 'Bad network connection',
-      });
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
+  const checkInternetAndFetchData = useCallback(
+    async (isPagination: boolean) => {
+      if (isFiltered) return; // Skip fetch if in filtered mode
 
-    loadData(isPagination);
-  }, []);
+      const netInfoState = await NetInfo.fetch();
+      if (!netInfoState.isConnected) {
+        Toast.show({
+          type: 'error',
+          text1: 'Network Error',
+          text2: 'Bad network connection',
+        });
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      loadData(isPagination);
+    },
+    [isFiltered]
+  );
 
   const loadData = async (isPagination: boolean) => {
     if (loadingMore || (!hasMore && isPagination)) return;
@@ -118,13 +124,15 @@ const InvoiceScreen: React.FC = () => {
   };
 
   const handleRefreshPress = useCallback(() => {
+    if (isFiltered) return; // Do not refresh if in filtered mode
+
     const currentTime = Date.now();
     if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
       setRefreshing(true);
       setLastFetchTime(currentTime);
       checkInternetAndFetchData(false);
     }
-  }, [lastFetchTime]);
+  }, [isFiltered, lastFetchTime]);
 
   const handleSearchPress = useCallback(() => {
     const pushAction = StackActions.push('SearchScreen', {
