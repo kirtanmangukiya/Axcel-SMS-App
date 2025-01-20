@@ -42,9 +42,10 @@ const InvoiceScreen: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
-  const [isFiltered, setIsFiltered] = useState<boolean>(!!results); // Added state
+  const [isFiltered, setIsFiltered] = useState<boolean>(!!results);
   const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
-  const FETCH_COOLDOWN = 300000; // 5 minutes in milliseconds
+  const [seenIds] = useState(() => new Set<string>());
+  const FETCH_COOLDOWN = 300000;
 
   useEffect(() => {
     if (!isFiltered && !results && !invoiceData.length) {
@@ -68,7 +69,7 @@ const InvoiceScreen: React.FC = () => {
 
   const checkInternetAndFetchData = useCallback(
     async (isPagination: boolean) => {
-      if (isFiltered) return; // Skip fetch if in filtered mode
+      if (isFiltered) return;
 
       const netInfoState = await NetInfo.fetch();
       if (!netInfoState.isConnected) {
@@ -96,24 +97,39 @@ const InvoiceScreen: React.FC = () => {
       setLoading(true);
       setPage(1);
       setHasMore(true);
+      seenIds.clear();
     }
 
     try {
-      const data = await InvoiceData(isPagination ? page + 1 : 1);
+      const currentPage = isPagination ? page + 1 : 1;
+      const data = await InvoiceData(currentPage);
       const invoices = data.invoices || [];
 
       if (invoices.length === 0) {
         setHasMore(false);
+        setLoadingMore(false);
+        setLoading(false);
+        setRefreshing(false);
+        return;
       }
 
-      const uniqueInvoices = invoices.filter(
-        invoice => !invoiceData.some(existing => existing.id === invoice.id)
-      );
+      const uniqueInvoices = invoices.filter(invoice => {
+        const stringId = invoice.id.toString();
+        if (seenIds.has(stringId)) {
+          return false;
+        }
+        seenIds.add(stringId);
+        return true;
+      });
 
-      setInvoiceData(prevData =>
-        isPagination ? [...prevData, ...uniqueInvoices] : uniqueInvoices
-      );
-      setPage(prevPage => (isPagination ? prevPage + 1 : 1));
+      if (uniqueInvoices.length === 0) {
+        setHasMore(false);
+      } else {
+        setInvoiceData(prevData => 
+          isPagination ? [...prevData, ...uniqueInvoices] : uniqueInvoices
+        );
+        setPage(currentPage);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -124,7 +140,7 @@ const InvoiceScreen: React.FC = () => {
   };
 
   const handleRefreshPress = useCallback(() => {
-    if (isFiltered) return; // Do not refresh if in filtered mode
+    if (isFiltered) return;
 
     const currentTime = Date.now();
     if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
@@ -177,11 +193,15 @@ const InvoiceScreen: React.FC = () => {
         <FlatList
           data={invoiceData}
           renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={item => `invoice_${item.id}`}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefreshPress} />
           }
-          onEndReached={() => checkInternetAndFetchData(true)}
+          onEndReached={() => {
+            if (!loadingMore && hasMore) {
+              checkInternetAndFetchData(true);
+            }
+          }}
           onEndReachedThreshold={0.5}
           contentContainerStyle={styles.listContent}
         />
@@ -192,7 +212,7 @@ const InvoiceScreen: React.FC = () => {
         )}
       </>
     );
-  }, [loading, invoiceData, refreshing, loadingMore, handleRefreshPress, renderItem]);
+  }, [loading, invoiceData, refreshing, loadingMore, hasMore, handleRefreshPress, renderItem]);
 
   return (
     <ImageBackground
