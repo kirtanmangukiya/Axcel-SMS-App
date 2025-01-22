@@ -27,7 +27,7 @@ import Toast from 'react-native-toast-message';
 import WebView from 'react-native-webview';
 import {useNavigation} from '@react-navigation/native';
 
-const InvoiceComponent = ({data, onInvoiceChange}) => {
+const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
   const [loading, setLoading] = useState(false);
   const [sessionUrl, setSessionUrl] = useState(null);
   const [stripeStatus, setStripeStatus] = useState(null);
@@ -197,33 +197,43 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     setLoading(true);
     
     try {
-      await deleteInvoiceDoc(selectedDocId);
-      setModalVisible(false);
+      const response = await deleteInvoiceDoc(selectedDocId);
       
-      // Force screen refresh using navigation.reset()
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'InvoiceScreen' }],
-      });
+      // Clear modal and states first
+      setModalVisible(false);
+      setSelectedDocId(null);
+      
+      // Force immediate data refresh based on screen
+      if (screenName === 'DueInvoice') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'DueInvoice' }],
+        });
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'InvoiceScreen' }],
+        });
+      }
       
       Toast.show({
         type: 'success',
         text1: 'Document Deleted',
-        text2: 'Document deleted successfully'
+        text2: 'Document deleted successfully',
       });
-  
+
     } catch (error) {
       console.error('Failed to delete document:', error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
+        type: 'error', 
+        text1: 'Error', 
         text2: 'Failed to delete document'
       });
     } finally {
       setLoading(false);
       setIsDeleting(false);
     }
-  }, [selectedDocId, navigation]);
+  }, [selectedDocId, navigation, screenName]);
   
 
   const handlePickImage = useCallback(async () => {
@@ -258,8 +268,25 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
             paymentId: data?.invoicePyaments?.[0]?.id || 'defaultPaymentId',
           });
 
-          // Force navigation refresh after successful upload
-          navigation.replace(navigation.getCurrentRoute().name);
+          // Force navigation refresh based on current screen
+          if (screenName === 'DueInvoice') {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'DueInvoice' }],
+            });
+            navigation.navigate('DueInvoice', { refresh: true });
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'InvoiceScreen' }],
+            });
+          }
+
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Invoice uploaded successfully'
+          });
 
         } catch (uploadError) {
           console.error('Upload error: ', uploadError);
@@ -273,10 +300,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         console.error('Image pick error:', err);
         Alert.alert('Error', 'Failed to pick the image');
       }
-    }
-  }, [data, navigation]);
-  if (sessionUrl) {
-    return (
+    }  }, [data, navigation, screenName]);  if (sessionUrl) {    return (
       <View style={styles.webviewContainer}>
         <WebView source={{uri: sessionUrl}} />
       </View>
