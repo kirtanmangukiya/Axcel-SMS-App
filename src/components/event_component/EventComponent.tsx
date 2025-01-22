@@ -108,7 +108,7 @@ const EventComponent: React.FC<EventComponentProps> = ({data}) => {
         <InfoTextContainer>
           <InfoText width={width}>Event Place</InfoText>
           <SubText width={width}>
-            {data.eventPlace ? data.eventPlace : 'N/A'}
+            {data.enentPlace ? data.enentPlace : 'N/A'}
           </SubText>
         </InfoTextContainer>
       </InfoContainer>
