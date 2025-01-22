@@ -35,6 +35,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // console.log('invoice data compoent ', data);
 
@@ -194,23 +195,36 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     if (!selectedDocId) return;
     setIsDeleting(true);
     setLoading(true);
+    
     try {
       await deleteInvoiceDoc(selectedDocId);
-      onInvoiceChange(); // Notify parent to refresh data
+      setModalVisible(false);
+      
+      // Force screen refresh using navigation.reset()
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'InvoiceScreen' }],
+      });
+      
       Toast.show({
         type: 'success',
         text1: 'Document Deleted',
-        text2: 'Document deleted successfully',
+        text2: 'Document deleted successfully'
       });
-      setModalVisible(false);
+  
     } catch (error) {
       console.error('Failed to delete document:', error);
-      Alert.alert('Error', 'Failed to delete document');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to delete document'
+      });
     } finally {
       setLoading(false);
       setIsDeleting(false);
     }
-  }, [selectedDocId, onInvoiceChange]);
+  }, [selectedDocId, navigation]);
+  
 
   const handlePickImage = useCallback(async () => {
     try {
@@ -244,7 +258,9 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
             paymentId: data?.invoicePyaments?.[0]?.id || 'defaultPaymentId',
           });
 
-          onInvoiceChange(); // Notify parent to refresh data
+          // Force navigation refresh after successful upload
+          navigation.replace(navigation.getCurrentRoute().name);
+
         } catch (uploadError) {
           console.error('Upload error: ', uploadError);
           Alert.alert('Error', 'Failed to upload the invoice');
@@ -258,7 +274,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         Alert.alert('Error', 'Failed to pick the image');
       }
     }
-  }, [data, onInvoiceChange]);  
+  }, [data, navigation]);
   if (sessionUrl) {
     return (
       <View style={styles.webviewContainer}>
