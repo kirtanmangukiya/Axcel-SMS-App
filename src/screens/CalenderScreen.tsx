@@ -11,17 +11,60 @@ import {
 import TopBarCalender from '../components/TopBarCalender';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import NoEventComponent from '../components/no_data_event/NoEventComponent';
 import { CalendarNewData } from '../config/axios';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../types';
+import { CalendarEvent, MainStackParamList } from '../types';
 
 type studentNavigationProp = NativeStackNavigationProp<
   MainStackParamList,
   'CalenderScreen'
 >;
+
+// Create a new file src/utils/calendarUtils.ts
+export const fetchCalendarEvents = async (startDate: Date, endDate: Date) => {
+  try {
+    const data = await CalendarNewData();
+    return generateDateCards(startDate, endDate, data);
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    throw error;
+  }
+};
+
+export const generateDateCards = (startDate: Date, endDate: Date, eventData: any) => {
+  const cards = [];
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).replace(/\//g, '-');
+
+    const isToday = new Date().toISOString().split('T')[0] === currentDate.toISOString().split('T')[0];
+    const dayData = eventData.find((item: any) => item.date === dateStr);
+
+    const dayEvents = {
+      id: dateStr,
+      date: new Date(currentDate),
+      isToday,
+      label: isToday ? 'Today' : currentDate.toLocaleDateString('en-US', {weekday: 'long'}),
+      events: [
+        ...(dayData?.newsEvents || []),
+        ...(dayData?.assignments || []),
+        ...(dayData?.homeworks || [])
+      ]
+    };
+
+    cards.push(dayEvents);
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return cards;
+};
 
 const CalenderScreen: React.FC = () => {
   const navigation = useNavigation<studentNavigationProp>();
@@ -46,7 +89,7 @@ const CalenderScreen: React.FC = () => {
     return () => {
       subscription.remove();
     };
-  }, [appState, currentMonth]);
+  }, [appState, currentMonth, checkInternetAndFetchData]);
 
   const checkInternetAndFetchData = async () => {
     const netInfoState = await NetInfo.fetch();
@@ -59,21 +102,17 @@ const CalenderScreen: React.FC = () => {
       setLoading(false);
       return;
     }
-    fetchCalendarEvents();
+    handleFetchCalendarEvents();
   };
 
-  const fetchCalendarEvents = async () => {
+  const handleFetchCalendarEvents = async () => {
     try {
       const startDate = new Date(currentMonth);
       const endDate = new Date(currentMonth);
       endDate.setMonth(endDate.getMonth() + 1);
       endDate.setDate(0);
 
-      const formattedStartDate = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-01`;
-      const formattedEndDate = `${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
-
-      const data = await CalendarNewData(); 
-      const processedData = generateDateCards(startDate, endDate, data);
+      const processedData = await fetchCalendarEvents(startDate, endDate);
 
       setCalendarEvents(prevEvents =>
         isLoadingMore ? [...prevEvents, ...processedData] : processedData
@@ -88,30 +127,27 @@ const CalenderScreen: React.FC = () => {
     }
   };
 
-  const generateDateCards = (startDate: Date, endDate: Date, eventData: any) => {
-    const cards = [];
-    const currentDate = new Date(startDate);
-
-    while (currentDate <= endDate) {
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const isToday = new Date().toISOString().split('T')[0] === dateStr;
-
-      const dayEvents = {
-        id: dateStr,
-        date: new Date(currentDate),
-        isToday: isToday,
-        label: isToday ? 'Today' : currentDate.toLocaleDateString('en-US', { weekday: 'long' }),
-        events: (eventData.assignments || [])
-          .filter((event: any) => event.date === dateStr)
-          .concat((eventData.homeworks || []).filter((event: any) => event.date === dateStr)),
-      };
-
-      cards.push(dayEvents);
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return cards;
-  };
+  const renderEventCard = ({ item }: { item: any }) => (
+    <View style={styles.cardContainer}>
+      <Text style={styles.dateLabel}>{item.label}</Text>
+      <Text style={styles.dateText}>
+        {item.date.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })}
+      </Text>
+      {item.events.length > 0 ? (
+        item.events.map((event: CalendarEvent) => (
+          <View key={event.id} style={styles.eventItem}>
+            <Text style={styles.eventText}>{event.title}</Text>
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noEventText}>No events</Text>
+      )}
+    </View>
+  );
 
   const handleMenuPress = () => {
     navigation.dispatch(DrawerActions.openDrawer());
@@ -133,32 +169,10 @@ const CalenderScreen: React.FC = () => {
   const onEndReached = () => {
     if (!isLoadingMore) {
       setIsLoadingMore(true);
-      const nextMonth = new Date(currentMonth);
+      const nextMonth = new Date(currentMonth); 
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       setCurrentMonth(nextMonth);
     }
-  };
-
-  const renderEventCard = ({ item }: { item: any }) => {
-    return (
-      <View style={styles.cardContainer}>
-        <Text style={styles.dateLabel}>{item.label}</Text>
-        <Text style={styles.dateText}>
-          {item.date.toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })}
-        </Text>
-        {item.events.length > 0 ? (
-          item.events.map((event: any, index: number) => (
-            <NoEventComponent key={index} data={event} />
-          ))
-        ) : (
-          <Text style={styles.noEventText}>No events</Text>
-        )}
-      </View>
-    );
   };
 
   return (
@@ -174,7 +188,7 @@ const CalenderScreen: React.FC = () => {
         <View style={styles.content}>
           {loading ? (
             <View style={styles.loadingWrapper}>
-              <Text style={{ color: 'white' }}>Loading ...</Text>
+              <Text style={{color: 'white'}}>Loading ...</Text>
             </View>
           ) : (
             <FlatList
@@ -239,6 +253,18 @@ const styles = StyleSheet.create({
   noEventText: {
     color: 'white',
     fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  eventItem: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 5,
+  },
+  eventText: {
+    color: 'white',
+    fontSize: 18,
+    marginBottom: 5,
     textAlign: 'center',
   },
 });
