@@ -154,9 +154,9 @@ const SideBarAdmin: FC<SideBarProps> = props => {
     Fontisto: Fontisto as ComponentType<IconProps>,
   };
 
-  const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData.user.id}`;
-  // console.log('check the image ', userData.user.id);
-
+  const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData?.user?.photo}`;
+  console.log('check the image ', userData.user.photo);
+  // const imageUrl = 'https://axcel.schoolmgmtsys.com/dashboard/profileImage/1';
   const ExternalUrlScreen = () => (
     <WebView source={{ uri: 'https://axcellibrary.schoolmgmtsys.com' }} />
   );
@@ -169,16 +169,12 @@ const SideBarAdmin: FC<SideBarProps> = props => {
         <FixedContainer>
           <AvatarContainer>
             <Avatar
-              source={
-                userData.user.id
-                  ? {uri: imageUrl}
-                  : require('../../assest/icons/SideBarBg.jpg')
-              }
+              source={{uri: imageUrl}}
             />
           </AvatarContainer>
           <UserInfo>
             <UserNameContainer>
-              <UserName>{userData.user.username}</UserName>
+              <UserName>{userData.user.fullName}</UserName>
               <TouchableOpacity onPress={() => handleLogout()}>
                 <Entypo name="log-out" size={width * 0.05} color="white" />
               </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,12 @@ import {
   Dimensions,
   Linking,
 } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
-import { MainStackParamList, RootStackParamList } from '../../types';
+import {RouteProp} from '@react-navigation/native';
+import {MainStackParamList, RootStackParamList} from '../../types';
 import ActivityIndacatorr from '../activity_indicator/ActivityIndacatorr';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TopBar from '../TopBar';
 import RenderHtml from 'react-native-render-html';
 
@@ -30,8 +30,8 @@ type NewsBoardScreenNavigationProp = NativeStackNavigationProp<
   'InsideNewsComponent'
 >;
 
-const InsideNewsComponent: React.FC<InsideNewsProps> = ({ route }) => {
-  const { data } = route.params;
+const InsideNewsComponent: React.FC<InsideNewsProps> = ({route}) => {
+  const {data} = route.params;
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<NewsBoardScreenNavigationProp>();
@@ -52,44 +52,47 @@ const InsideNewsComponent: React.FC<InsideNewsProps> = ({ route }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Simulate an API call or any data refresh logic
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
   };
 
   useEffect(() => {
-    // Update the HTML content and log it to the console
     setHtmlContent(data.newsText);
     console.log('Updated HTML Content:', data.newsText);
   }, [data.newsText]);
 
   const handleDownload = (url: string) => {
-    navigation.navigate('PdfShowComponent', { pdfUrl: url });
+    navigation.navigate('PdfShowComponent', {pdfUrl: url});
   };
 
   const handleLinkPress = (url: string) => {
-    Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+    Linking.openURL(url).catch(err =>
+      console.error('Failed to open URL:', err),
+    );
   };
-
   const renderHTML = (html: string) => {
     return (
       <RenderHtml
-        contentWidth={screenWidth}
-        source={{ html }}
+        contentWidth={screenWidth * 0.9}
+        source={{html}}
+        baseStyle={{color: 'black'}}
         renderers={{
-          a: (props) => {
-            const { href, children } = props;
-            // Check if the href starts with http or https
-            if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+          a: props => {
+            const {href, children} = props;
+            if (
+              href &&
+              (href.startsWith('http://') || href.startsWith('https://'))
+            ) {
               return (
                 <TouchableOpacity onPress={() => handleLinkPress(href)}>
                   <Text style={styles.link}>{children}</Text>
                 </TouchableOpacity>
               );
             }
-            // If href is not a valid link, render it as plain text
-            return <Text>{children}</Text>;
+            return (
+              <Text style={[styles.text, {color: 'black'}]}>{children}</Text>
+            );
           },
         }}
       />
@@ -98,14 +101,13 @@ const InsideNewsComponent: React.FC<InsideNewsProps> = ({ route }) => {
 
   return (
     <ImageBackground
-      source={require('../../assest/icons/SideBarBg.jpg')} // Replace with the path to your background image
+      source={require('../../assest/icons/SideBarBg.jpg')}
       style={styles.backgroundImage}>
       <ScrollView
-        contentContainerStyle={styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        <View style={{ marginBottom: '5%' }}>
+        <View style={styles.topBarContainer}>
           <TopBar title="News Board" />
         </View>
         {loading && (
@@ -116,11 +118,9 @@ const InsideNewsComponent: React.FC<InsideNewsProps> = ({ route }) => {
         <View style={styles.contentContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>{data.newsTitle}</Text>
-            <Text style={{ color: 'black' }}>{data?.newsDate}</Text>
+            <Text style={styles.date}>{data?.newsDate}</Text>
           </View>
-          <View style={styles.textContainer}>
-            {renderHTML(htmlContent)}
-          </View>
+          <View style={styles.textContainer}>{renderHTML(htmlContent)}</View>
           {pdfUrls.length > 0 && (
             <View style={styles.downloadButtonsContainer}>
               {pdfUrls.map((url, index) => (
@@ -150,60 +150,75 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  container: {
-    flexGrow: 1,
-    padding: '5%',
+  topBarContainer: {
+    marginBottom: screenHeight * 0.02,
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: '5%',
-    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: screenWidth * 0.04,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
     backgroundColor: 'white',
-    padding: 16,
+    padding: screenWidth * 0.04,
     borderRadius: 10,
-    marginBottom: 16,
+    marginBottom: screenHeight * 0.02,
   },
   title: {
-    fontSize: 22,
+    fontSize: screenWidth * 0.055,
     fontWeight: 'bold',
-    color: 'black',
-    marginBottom: 16,
+    color: '#222222',
+    marginBottom: screenHeight * 0.01,
+  },
+  date: {
+    fontSize: screenWidth * 0.04,
+    color: '#444444',
   },
   textContainer: {
     flex: 1,
     backgroundColor: 'white',
-    padding: 10,
+    padding: screenWidth * 0.04,
     borderRadius: 10,
   },
+  text: {
+    color: 'black',
+    fontSize: screenWidth * 0.04,
+    lineHeight: screenWidth * 0.06,
+  },
   link: {
-    color: 'blue',
+    color: '#0066CC',
     textDecorationLine: 'underline',
+    fontSize: screenWidth * 0.04,
   },
   loadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
   },
   downloadButtonsContainer: {
-    marginTop: 20,
+    marginTop: screenHeight * 0.02,
   },
   downloadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 10,
-    marginTop: 10,
+    padding: screenWidth * 0.03,
+    borderRadius: 8,
+    marginTop: screenHeight * 0.01,
   },
   downloadButtonText: {
     color: 'white',
     marginLeft: 8,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: screenWidth * 0.04,
   },
 });

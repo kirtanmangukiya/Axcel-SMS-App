@@ -23,21 +23,21 @@ type NewsComponentNavigationProp = NativeStackNavigationProp<
 const NewsComponent: React.FC<NewsProps> = ({data}) => {
   const {start, title, id} = data; // Destructure data to get start and title
   const navigation = useNavigation<NewsComponentNavigationProp>();
-  console.log(data);
+  // console.log(data);
   const [data22, setData] = useState<object | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  console.log(id);
+  // console.log(id);
 
   const loadData = async () => {
     try {
       const data = await NewsInsideData({id: id});
-      console.log('assignment_list_data ', data);
+      // console.log('assignment_list_data ', data);
 
       setData(data);
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     } finally {
       setLoading(false);
       setRefreshing(false); // Stop refreshing indicator

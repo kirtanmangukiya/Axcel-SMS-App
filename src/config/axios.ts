@@ -567,7 +567,7 @@ export async function classData(): Promise<classApiResponce> {
     if (!AUTH_TOKEN) {
       throw new Error('AUTH_TOKEN is not available');
     }
-    const response = await fetch(`${BASE_URL}classes/listAll`, {
+    const response = await fetch(`${BASE_URL}/classes/listAll`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -735,13 +735,10 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
 
     // Read and log response text
     const text = await response.text();
-    console.log('API Response Text:', text);
-
     // Parse and return JSON data if available
     if (text.trim() !== '') {
       try {
         const data = JSON.parse(text);
-        console.log('Parsed API Response:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::', data);
         return data; // Return the parsed data
       } catch (jsonError) {
         console.error('JSON parse error:', jsonError, 'Response text:', text);
@@ -978,7 +975,7 @@ export async function creditNoteData(): Promise<CreditNoteApiResponce> {
     }
 
     const text = await response.text();
-    console.log('Response text:', text);
+    // console.log('Response text:', text);
 
     let data: CreditNoteApiResponce;
 

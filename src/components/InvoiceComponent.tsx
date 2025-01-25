@@ -37,38 +37,65 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // console.log('invoice data compoent ', data);
-
   const handleViewDoc = useCallback(
     async fileName => {
       try {
-        console.log(fileName);
-
-        // Get the file extension
         const fileExtension = fileName.split('.').pop().toLowerCase();
-
+        const base_url = 'https://sms.psleprimary.com/uploads/user_receipts';
+        const filePath = `${base_url}/${fileName}`;
+  
         if (fileExtension === 'pdf') {
-          // If it's a PDF, log it
-          // console.log('This is a PDF file:', fileName);
           navigation.navigate('PdfShowComponent', {
-            pdfUrl: '661c9af674843.pdf',
+            pdfUrl: fileName,
+            routeScreen: 'StudentProfileComponent',
           });
-        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-          // If it's an image, show it in full-screen
-          const base_url = 'https://sms.psleprimary.com/uploads/user_receipts';
-          const imagePath = `${base_url}/${fileName}`;
-
-          // Check if the file exists before trying to display it
-          // const fileExists = await RNFetchBlob.fs.exists(imagePath);
-          navigation.navigate('WebViewComponent2', {url: imagePath});
-        } else {
-          console.log('Unsupported file type:', fileName);
+        } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
+          // Show loading toast
+          Toast.show({
+            type: 'info',
+            text1: 'Opening image',
+            text2: 'Please wait...',
+          });
+          
+          setLoading(true);
+          const {dirs} = RNFetchBlob.fs;
+          const localPath = `${dirs.DocumentDir}/${fileName}`;
+          
+          const res = await RNFetchBlob.config({
+            fileCache: true,
+            path: localPath,
+            appendExt: fileExtension
+          }).fetch('GET', filePath);
+  
+          await FileViewer.open(res.path(), {
+            showOpenWithDialog: true,
+            displayName: fileName,
+          });
+  
+          // Cleanup temp file after delay
+          setTimeout(() => {
+            RNFetchBlob.fs.unlink(localPath)
+              .catch(() => {});
+          }, 10000);
         }
       } catch (error) {
-        console.error('Error handling file:', error);
+        if (!error.message.includes('User did not share')) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to open file'
+          });
+        }
+      } finally {
+        setLoading(false);
+        Toast.hide();
       }
     },
     [navigation],
   );
+  
+  
+  
 
   // const handleViewDoc = useCallback(
   //   async fileName => {
@@ -79,38 +106,25 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
 
   const handleFullView = useCallback(
     async fileName => {
-      try {
-        const id = data?.id;
-        if (!id) {
-          console.log('ID is missing.');
-          return;
-        }
-
-        if (!data?.invoicePyaments?.[0]?.paymentTitle) {
-          console.log('Payment title is missing.');
-          return;
-        }
-
+      const id = data?.id;
+      if (id) {
         const generatedHash = MD5.hex_md5(
-          data.invoicePyaments[0].paymentTitle,
-        );
-        console.log('Generated Hash:', generatedHash);
+          data?.invoicePyaments?.[0]?.paymentTitle,
+        ); // Generate the MD5 hash from the id
+        console.log('---------------------', generatedHash);
 
         const googleDriveUrl = `https://drive.google.com/viewerng/viewer?embedded=true&url=`;
         const pdfFileUrl = `https://axcel.schoolmgmtsys.com/getpdf.php?getInv=${generatedHash}`;
-        const pdfUrl = `${googleDriveUrl}${encodeURIComponent(pdfFileUrl)}`;
 
-        // Validate URL before navigation
-        if (!pdfUrl || typeof pdfUrl !== 'string') {
-          console.log('Invalid PDF URL');
-          return;
-        }
+        // Combine googleDriveUrl with the pdfFileUrl to get the complete URL
+        const pdfUrl = `${googleDriveUrl}${pdfFileUrl}`;
 
+        // Navigate to PdfShowComponent2 with the PDF URL
         navigation.navigate('PdfShowComponent2', {
-          pdfUrl,
+          pdfUrl, // Pass the pdfUrl
         });
-      } catch (error) {
-        console.error('Error in handleFullView:', error);
+      } else {
+        console.log('ID is missing.');
       }
     },
     [navigation, data],
@@ -124,15 +138,14 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     setLoading(true);
     try {
       const stripeData = await StripeStatusData(); // Replace with actual API call
-      if (stripeData) {
-        setStripeStatus(stripeData); // Set stripeStatus data
-      }
+      setStripeStatus(stripeData); // Set stripeStatus data
     } catch (error) {
-      console.error('Error loading stripe status:', error);
+      console.log(error);
     } finally {
       setLoading(false);
     }
   }, []);
+
   const handlePayBill = useCallback(async () => {
     console.log('handlePayBill called');
     setLoading(true);
@@ -226,39 +239,46 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         throw new Error('No Firebase token found');
       }
 
+      // Support multiple file types
       const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+        type: [
+          DocumentPicker.types.images,
+          DocumentPicker.types.pdf,
+          DocumentPicker.types.doc,
+          DocumentPicker.types.docx,
+        ],
       });
 
       if (res && res.length > 0) {
+        setLoading(true); // Show loading state
         const {uri, name, type} = res[0];
         const base64Data = await RNFS.readFile(uri, 'base64');
 
-        try {
-          await invoiceUploadData({
-            fileName: name,
-            fileMimetype: type,
-            fileExtension: name.split('.').pop(),
-            fileData: base64Data,
-            firebaseToken: firebaseToken,
-            paymentId: data?.invoicePyaments?.[0]?.id || 'defaultPaymentId',
-          });
+        await invoiceUploadData({
+          fileName: name,
+          fileMimetype: type,
+          fileExtension: name.split('.').pop(),
+          fileData: base64Data,
+          firebaseToken: firebaseToken,
+          paymentId: data?.invoicePyaments?.[0]?.id || 'defaultPaymentId',
+        });
 
-          onInvoiceChange(); // Notify parent to refresh data
-        } catch (uploadError) {
-          console.error('Upload error: ', uploadError);
-          Alert.alert('Error', 'Failed to upload the invoice');
-        }
+        onInvoiceChange(); // Trigger refresh after successful upload
       }
     } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('User canceled the picker');
-      } else {
+      if (!DocumentPicker.isCancel(err)) {
         console.error('Image pick error:', err);
-        Alert.alert('Error', 'Failed to pick the image');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to upload the file',
+        });
       }
+    } finally {
+      setLoading(false); // Hide loading state
     }
-  }, [data, onInvoiceChange]);  
+  }, [data, onInvoiceChange]);
+
   if (sessionUrl) {
     return (
       <View style={styles.webviewContainer}>
@@ -275,9 +295,9 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
   const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${data?.id}`;
 
   return (
-    <View style={styles.container}>
-      {/* style={styles.container}
-      onPress={() => handleFullView('receipt_660e4a0a6cd2b.jpeg')}> */}
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => handleFullView('receipt_660e4a0a6cd2b.jpeg')}>
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicatorComponent />
@@ -360,7 +380,11 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
           </View>
         </View>
         <Text style={styles.paymentStatus}>
-          {data?.invoicePyaments?.[0]?.paymentStatus === 1 ? 'PAID' : data?.invoicePyaments?.[0]?.paymentStatus === 2 ? 'PARTIALLY PAID' : 'UNPAID'}
+          {data?.paymentStatus === 1
+            ? 'PAID'
+            : data?.paymentStatus === 2
+            ? 'PARTIALLY PAID'
+            : 'UNPAID'}
         </Text>
         <TouchableOpacity
           style={[styles.button, {marginLeft: '10%'}]}
@@ -424,7 +448,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
           </View>
         </View>
       </Modal>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -494,7 +518,7 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontWeight: 'bold',
-    color:'#555'
+    color: '#555',
   },
   rightSection: {
     flex: 6, // 70% width

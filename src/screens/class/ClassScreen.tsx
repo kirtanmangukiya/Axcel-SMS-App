@@ -150,7 +150,7 @@ const ClassScreen: React.FC = () => {
       style={styles.background}>
       <View style={styles.container}>
         <TopBar
-          title="Classs"
+          title="Class"
           onSearchPress={handleSearchPress}
           onRefreshPress={handleRefreshPress}
           onMenuPress={handleMenuPress}

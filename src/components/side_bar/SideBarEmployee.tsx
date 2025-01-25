@@ -29,6 +29,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Fontisto from 'react-native-vector-icons/Fontisto';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 const {width, height} = Dimensions.get('window');
 
 // Define the props for your sidebar component
@@ -230,19 +231,25 @@ const SideBarEmployee: FC<SideBarProps> = props => {
       );
     }
   };
-
+  const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData?.user?.photo}`;
+  console.log('check the image ', userData.user.photo);
   return (
     <ImageBackground
       source={require('../../assest/icons/SideBarBg.jpg')}
       style={{flex: 1}}>
       <Container>
         <FixedContainer>
-          <AvatarContainer>
-            <Avatar source={require('../../assest/icons/download.jpg')} />
+        <AvatarContainer>
+            <Avatar
+              source={{uri: imageUrl}}
+            />
           </AvatarContainer>
           <UserInfo>
             <UserNameContainer>
-              <UserName>{userData.user.username}</UserName>
+              <UserName>{userData.user.fullName}</UserName>
+              <TouchableOpacity onPress={() => handleLogout()}>
+                              <Entypo name="log-out" size={width * 0.05} color="white" />
+              </TouchableOpacity>
               {/* <Icon name="md-person" size={20} color="#f00a0a" /> */}
             </UserNameContainer>
             <NicknameContainer>

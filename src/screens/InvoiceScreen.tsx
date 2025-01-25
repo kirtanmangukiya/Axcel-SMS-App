@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View,
   FlatList,
@@ -15,9 +15,9 @@ import {
   RouteProp,
   useRoute,
 } from '@react-navigation/native';
-import { InvoiceData } from '../config/axios';
-import { InvoiceItemResponce, MainStackParamList } from '../types';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {InvoiceData} from '../config/axios';
+import {InvoiceItemResponce, MainStackParamList} from '../types';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
 import TopBar from '../components/TopBar';
@@ -38,7 +38,9 @@ const InvoiceScreen: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(!results);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [invoiceData, setInvoiceData] = useState<InvoiceItemResponce[]>(results || []);
+  const [invoiceData, setInvoiceData] = useState<InvoiceItemResponce[]>(
+    results || [],
+  );
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
@@ -85,7 +87,7 @@ const InvoiceScreen: React.FC = () => {
 
       loadData(isPagination);
     },
-    [isFiltered]
+    [isFiltered],
   );
 
   const loadData = async (isPagination: boolean) => {
@@ -125,8 +127,8 @@ const InvoiceScreen: React.FC = () => {
       if (uniqueInvoices.length === 0) {
         setHasMore(false);
       } else {
-        setInvoiceData(prevData => 
-          isPagination ? [...prevData, ...uniqueInvoices] : uniqueInvoices
+        setInvoiceData(prevData =>
+          isPagination ? [...prevData, ...uniqueInvoices] : uniqueInvoices,
         );
         setPage(currentPage);
       }
@@ -140,15 +142,10 @@ const InvoiceScreen: React.FC = () => {
   };
 
   const handleRefreshPress = useCallback(() => {
-    if (isFiltered) return;
-
-    const currentTime = Date.now();
-    if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
-      setRefreshing(true);
-      setLastFetchTime(currentTime);
-      checkInternetAndFetchData(false);
-    }
-  }, [isFiltered, lastFetchTime]);
+    setRefreshing(true);
+    navigation.setParams({results: undefined});
+    loadData(false);
+  }, [loadData, navigation]);
 
   const handleSearchPress = useCallback(() => {
     const pushAction = StackActions.push('SearchScreen', {
@@ -163,12 +160,18 @@ const InvoiceScreen: React.FC = () => {
   }, [navigation]);
 
   const renderItem = useCallback(
-    ({ item }: { item: InvoiceItemResponce }) => (
-      <View style={{ marginVertical: 10, marginHorizontal: 15 }}>
-        <InvoiceComponent data={item} onInvoiceChange={() => {}} />
+    ({item}: {item: InvoiceItemResponce}) => (
+      <View style={{marginVertical: 10, marginHorizontal: 15}}>
+        <InvoiceComponent
+          data={item}
+          onInvoiceChange={() => {
+            setRefreshing(true);
+            loadData();
+          }}
+        />
       </View>
     ),
-    []
+    [loadData],
   );
 
   const renderContent = useMemo(() => {
@@ -195,7 +198,10 @@ const InvoiceScreen: React.FC = () => {
           renderItem={renderItem}
           keyExtractor={item => `invoice_${item.id}`}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefreshPress} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefreshPress}
+            />
           }
           onEndReached={() => {
             if (!loadingMore && hasMore) {
@@ -212,13 +218,20 @@ const InvoiceScreen: React.FC = () => {
         )}
       </>
     );
-  }, [loading, invoiceData, refreshing, loadingMore, hasMore, handleRefreshPress, renderItem]);
+  }, [
+    loading,
+    invoiceData,
+    refreshing,
+    loadingMore,
+    hasMore,
+    handleRefreshPress,
+    renderItem,
+  ]);
 
   return (
     <ImageBackground
       source={require('../assest/icons/SideBarBg.jpg')}
-      style={styles.background}
-    >
+      style={styles.background}>
       <View style={styles.container}>
         <TopBar
           title="Invoices"

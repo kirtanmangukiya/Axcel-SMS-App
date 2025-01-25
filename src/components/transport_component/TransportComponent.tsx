@@ -30,7 +30,9 @@ const TransportComponent: React.FC<transportItemData> = ({data}) => {
           <Text style={styles.invoiceNumber}>{transportTitleAfter}</Text>
         </View>
 
-        <Text>{data.routeDetails}</Text>
+        <Text style={{color: '#666', fontSize: 16, fontWeight: '500'}}>
+          {data.routeDetails}
+        </Text>
       </View>
       <View style={styles.rightSection}>
         <View style={styles.amountContainer}>

@@ -104,23 +104,24 @@ interface User {
 const SideBarAdmin: FC<SideBarProps> = props => {
   const {userData} = props;
   const navigation = useNavigation();
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.clear(); // Clear all stored data
-      await AsyncStorage.removeItem('savedEmail');
-      await AsyncStorage.removeItem('savedPassword');
-      Alert.alert('Success', 'Logout Successfully');
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Login'}],
-      });
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        'An error occurred while logging out. Please try again.',
-      );
-    }
-  };
+
+const handleLogout = async () => {
+  try {
+    await AsyncStorage.clear(); // Clear all stored data
+    await AsyncStorage.removeItem('savedEmail');
+    await AsyncStorage.removeItem('savedPassword');
+    Alert.alert('Success', 'Logout Successfully');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' as never }],
+    });
+  } catch (error) {
+    Alert.alert(
+      'Error',
+      'An error occurred while logging out. Please try again.',
+    );
+  }
+};
 
   type IconProps = {
     name: string;
@@ -263,18 +264,24 @@ const SideBarAdmin: FC<SideBarProps> = props => {
       );
     }
   };
+
+  const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData?.user?.photo}`;
+  console.log('check the image ', userData.user.photo);
+  
   return (
     <ImageBackground
       source={require('../../assest/icons/SideBarBg.jpg')}
       style={{flex: 1}}>
       <Container>
         <FixedContainer>
-          <AvatarContainer>
-            <Avatar source={require('../../assest/icons/download.jpg')} />
+        <AvatarContainer>
+            <Avatar
+              source={{uri: imageUrl}}
+            />
           </AvatarContainer>
           <UserInfo>
             <UserNameContainer>
-              <UserName>{userData.user.username}</UserName>
+              <UserName>{userData.user.fullName}</UserName>
               <TouchableOpacity onPress={() => handleLogout()}>
                 <Entypo name="log-out" size={width * 0.05} color="white" />
               </TouchableOpacity>
