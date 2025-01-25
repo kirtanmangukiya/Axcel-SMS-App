@@ -201,7 +201,7 @@ const SideBarStudent: FC<SideBarProps> = props => {
           </AvatarContainer>
           <UserInfo>
             <UserNameContainer>
-              <UserName>{userData.user.username}</UserName>
+              <UserName>{userData.user.fullName}</UserName>
               <TouchableOpacity onPress={() => handleLogout()}>
                 <Entypo name="log-out" size={width * 0.05} color="white" />
               </TouchableOpacity>
