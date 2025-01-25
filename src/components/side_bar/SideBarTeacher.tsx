@@ -104,23 +104,24 @@ interface User {
 const SideBarAdmin: FC<SideBarProps> = props => {
   const {userData} = props;
   const navigation = useNavigation();
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.clear(); // Clear all stored data
-      await AsyncStorage.removeItem('savedEmail');
-      await AsyncStorage.removeItem('savedPassword');
-      Alert.alert('Success', 'Logout Successfully');
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Login'}],
-      });
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        'An error occurred while logging out. Please try again.',
-      );
-    }
-  };
+
+const handleLogout = async () => {
+  try {
+    await AsyncStorage.clear(); // Clear all stored data
+    await AsyncStorage.removeItem('savedEmail');
+    await AsyncStorage.removeItem('savedPassword');
+    Alert.alert('Success', 'Logout Successfully');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' as never }],
+    });
+  } catch (error) {
+    Alert.alert(
+      'Error',
+      'An error occurred while logging out. Please try again.',
+    );
+  }
+};
 
   type IconProps = {
     name: string;
