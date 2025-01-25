@@ -217,11 +217,19 @@ const AttendenceScreen = () => {
                 onChange={onDateChange}
               />
             )}
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={handleSearch}>
-              <Text style={styles.searchButtonText}>SEARCH</Text>
-            </TouchableOpacity>
+            <View style={styles.searchButtonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.searchButton,
+                  (!selectedClass || !selectedSection) && styles.searchButtonDisabled,
+                ]}
+                onPress={handleSearch}
+                disabled={!selectedClass || !selectedSection}>
+                <Text style={styles.buttonText}>
+                  {loading ? 'Searching...' : 'Search'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </>
         ) : (
           <View style={styles.noDataContainer}>
@@ -266,13 +274,6 @@ const styles = StyleSheet.create({
   dateText: {
     color: '#000',
   },
-  searchButton: {
-    width: '100%',
-    backgroundColor: '#2d7ca3',
-    padding: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
   searchButtonText: {
     fontWeight: 'bold',
   },
@@ -289,6 +290,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  searchButtonContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  searchButton: {
+    marginVertical: 16,
+    width: '100%',
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 2,
+    backgroundColor: '#2d7ca3',
+  },
+  searchButtonDisabled: {
+    backgroundColor: 'gray',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  }
+  
 });
 
 export default AttendenceScreen;

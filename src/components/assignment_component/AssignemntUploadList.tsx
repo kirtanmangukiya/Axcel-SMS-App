@@ -105,7 +105,7 @@ const AssignmentUploadList = () => {
     }
   };
 
-  const renderItem = ({item}) => {
+  const renderItem = ({item}: {item: any}) => {
     const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${item?.id}`;
     return (
       <View style={styles.card}>
@@ -129,7 +129,7 @@ const AssignmentUploadList = () => {
           />
           <View style={styles.textContainer}>
             <Text style={styles.label}>Class</Text>
-            <Text style={styles.value}>{item.className || 'NA'}</Text>
+            <Text style={styles.value}>{item.classSectionName || 'NA'}</Text>
           </View>
         </View>
 

@@ -275,9 +275,9 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
   const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${data?.id}`;
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={() => handleFullView('receipt_660e4a0a6cd2b.jpeg')}>
+    <View style={styles.container}>
+      {/* style={styles.container}
+      onPress={() => handleFullView('receipt_660e4a0a6cd2b.jpeg')}> */}
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicatorComponent />
@@ -424,7 +424,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
           </View>
         </View>
       </Modal>
-    </TouchableOpacity>
+    </View>
   );
 };
 
