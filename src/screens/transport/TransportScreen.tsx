@@ -79,9 +79,10 @@ const TransportScreen: React.FC = () => {
     setRefreshing(true);
     loadData(); // Reload data on refresh
     console.log('Refreshing data...');
-    route.params.results = undefined;
-  }, []);
-
+    if (route.params && 'results' in route.params) {
+      (route.params as {results?: any}).results = undefined;
+    }
+  }, [route.params]);
   const handleMenuPress = useCallback(() => {
     navigation.dispatch(DrawerActions.openDrawer());
   }, [navigation]);

@@ -112,12 +112,14 @@ const styles = StyleSheet.create({
     marginBottom: hp('1%'),
   },
   name: {
-    fontSize: wp('4%'),
+    fontSize: wp('5%'),
     fontWeight: 'bold',
+    color: '#000',
   },
   admissionNumber: {
     fontSize: wp('4%'),
     fontWeight: 'bold',
+    color: '#000',
   },
   body: {
     marginBottom: hp('2%'),
@@ -125,9 +127,11 @@ const styles = StyleSheet.create({
   attendanceLabel: {
     fontSize: wp('3.5%'),
     fontWeight: 'bold',
+    color: '#000',
   },
   attendanceValue: {
     fontSize: wp('3.5%'),
+    color: '#000',
   },
   buttonsContainer: {
     flexDirection: 'column',
@@ -141,7 +145,7 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: wp('1%'),
     padding: wp('2%'),
-    backgroundColor: '#ddd',
+    backgroundColor: '#f0f0f0',
     alignItems: 'center',
     borderRadius: wp('2%'),
   },
@@ -151,6 +155,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: wp('3.5%'),
     fontWeight: 'bold',
+    color: '#000',
   },
   selectedButtonText: {
     color: '#fff',
