@@ -404,6 +404,11 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
         </Text>
         <TouchableOpacity
           style={[styles.button, {marginLeft: '10%'}]}
+          onPress={() => console.log('View Invoice')}>
+          <Text style={styles.buttonText}>View Invoice</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, {marginLeft: '10%'}]}
           onPress={handlePickImage}>
           <Text style={styles.buttonText}>Upload Receipt</Text>
         </TouchableOpacity>
