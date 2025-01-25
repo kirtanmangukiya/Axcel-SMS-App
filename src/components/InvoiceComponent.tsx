@@ -37,38 +37,65 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // console.log('invoice data compoent ', data);
-
   const handleViewDoc = useCallback(
     async fileName => {
       try {
-        console.log(fileName);
-
-        // Get the file extension
         const fileExtension = fileName.split('.').pop().toLowerCase();
-
+        const base_url = 'https://sms.psleprimary.com/uploads/user_receipts';
+        const filePath = `${base_url}/${fileName}`;
+  
         if (fileExtension === 'pdf') {
-          // If it's a PDF, log it
-          // console.log('This is a PDF file:', fileName);
           navigation.navigate('PdfShowComponent', {
-            pdfUrl: '661c9af674843.pdf',
+            pdfUrl: fileName,
+            routeScreen: 'StudentProfileComponent',
           });
-        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-          // If it's an image, show it in full-screen
-          const base_url = 'https://sms.psleprimary.com/uploads/user_receipts';
-          const imagePath = `${base_url}/${fileName}`;
-
-          // Check if the file exists before trying to display it
-          // const fileExists = await RNFetchBlob.fs.exists(imagePath);
-          navigation.navigate('WebViewComponent2', {url: imagePath});
-        } else {
-          console.log('Unsupported file type:', fileName);
+        } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
+          // Show loading toast
+          Toast.show({
+            type: 'info',
+            text1: 'Opening image',
+            text2: 'Please wait...',
+          });
+          
+          setLoading(true);
+          const {dirs} = RNFetchBlob.fs;
+          const localPath = `${dirs.DocumentDir}/${fileName}`;
+          
+          const res = await RNFetchBlob.config({
+            fileCache: true,
+            path: localPath,
+            appendExt: fileExtension
+          }).fetch('GET', filePath);
+  
+          await FileViewer.open(res.path(), {
+            showOpenWithDialog: true,
+            displayName: fileName,
+          });
+  
+          // Cleanup temp file after delay
+          setTimeout(() => {
+            RNFetchBlob.fs.unlink(localPath)
+              .catch(() => {});
+          }, 10000);
         }
       } catch (error) {
-        console.error('Error handling file:', error);
+        if (!error.message.includes('User did not share')) {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to open file'
+          });
+        }
+      } finally {
+        setLoading(false);
+        Toast.hide();
       }
     },
     [navigation],
   );
+  
+  
+  
 
   // const handleViewDoc = useCallback(
   //   async fileName => {
