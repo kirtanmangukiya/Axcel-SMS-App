@@ -27,7 +27,7 @@ import Toast from 'react-native-toast-message';
 import WebView from 'react-native-webview';
 import {useNavigation} from '@react-navigation/native';
 
-const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
+const InvoiceComponent = ({data, onInvoiceChange}) => {
   const [loading, setLoading] = useState(false);
   const [sessionUrl, setSessionUrl] = useState(null);
   const [stripeStatus, setStripeStatus] = useState(null);
@@ -35,7 +35,6 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // console.log('invoice data compoent ', data);
 
@@ -80,38 +79,25 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
 
   const handleFullView = useCallback(
     async fileName => {
-      try {
-        const id = data?.id;
-        if (!id) {
-          console.log('ID is missing.');
-          return;
-        }
-
-        if (!data?.invoicePyaments?.[0]?.paymentTitle) {
-          console.log('Payment title is missing.');
-          return;
-        }
-
+      const id = data?.id;
+      if (id) {
         const generatedHash = MD5.hex_md5(
-          data.invoicePyaments[0].paymentTitle,
-        );
-        console.log('Generated Hash:', generatedHash);
+          data?.invoicePyaments?.[0]?.paymentTitle,
+        ); // Generate the MD5 hash from the id
+        console.log('---------------------', generatedHash);
 
         const googleDriveUrl = `https://drive.google.com/viewerng/viewer?embedded=true&url=`;
         const pdfFileUrl = `https://axcel.schoolmgmtsys.com/getpdf.php?getInv=${generatedHash}`;
-        const pdfUrl = `${googleDriveUrl}${encodeURIComponent(pdfFileUrl)}`;
 
-        // Validate URL before navigation
-        if (!pdfUrl || typeof pdfUrl !== 'string') {
-          console.log('Invalid PDF URL');
-          return;
-        }
+        // Combine googleDriveUrl with the pdfFileUrl to get the complete URL
+        const pdfUrl = `${googleDriveUrl}${pdfFileUrl}`;
 
+        // Navigate to PdfShowComponent2 with the PDF URL
         navigation.navigate('PdfShowComponent2', {
-          pdfUrl,
+          pdfUrl, // Pass the pdfUrl
         });
-      } catch (error) {
-        console.error('Error in handleFullView:', error);
+      } else {
+        console.log('ID is missing.');
       }
     },
     [navigation, data],
@@ -125,15 +111,14 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
     setLoading(true);
     try {
       const stripeData = await StripeStatusData(); // Replace with actual API call
-      if (stripeData) {
-        setStripeStatus(stripeData); // Set stripeStatus data
-      }
+      setStripeStatus(stripeData); // Set stripeStatus data
     } catch (error) {
-      console.error('Error loading stripe status:', error);
+      console.log(error);
     } finally {
       setLoading(false);
     }
   }, []);
+
   const handlePayBill = useCallback(async () => {
     console.log('handlePayBill called');
     setLoading(true);
@@ -195,46 +180,23 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
     if (!selectedDocId) return;
     setIsDeleting(true);
     setLoading(true);
-    
     try {
-      const response = await deleteInvoiceDoc(selectedDocId);
-      
-      // Clear modal and states first
-      setModalVisible(false);
-      setSelectedDocId(null);
-      
-      // Force immediate data refresh based on screen
-      if (screenName === 'DueInvoice') {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'DueInvoice' }],
-        });
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'InvoiceScreen' }],
-        });
-      }
-      
+      await deleteInvoiceDoc(selectedDocId);
+      onInvoiceChange(); // Notify parent to refresh data
       Toast.show({
         type: 'success',
         text1: 'Document Deleted',
         text2: 'Document deleted successfully',
       });
-
+      setModalVisible(false);
     } catch (error) {
       console.error('Failed to delete document:', error);
-      Toast.show({
-        type: 'error', 
-        text1: 'Error', 
-        text2: 'Failed to delete document'
-      });
+      Alert.alert('Error', 'Failed to delete document');
     } finally {
       setLoading(false);
       setIsDeleting(false);
     }
-  }, [selectedDocId, navigation, screenName]);
-  
+  }, [selectedDocId, onInvoiceChange]);
 
   const handlePickImage = useCallback(async () => {
     try {
@@ -250,57 +212,48 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
         throw new Error('No Firebase token found');
       }
 
+      // Support multiple file types
       const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+        type: [
+          DocumentPicker.types.images,
+          DocumentPicker.types.pdf,
+          DocumentPicker.types.doc,
+          DocumentPicker.types.docx,
+        ],
       });
 
       if (res && res.length > 0) {
+        setLoading(true); // Show loading state
         const {uri, name, type} = res[0];
         const base64Data = await RNFS.readFile(uri, 'base64');
 
-        try {
-          await invoiceUploadData({
-            fileName: name,
-            fileMimetype: type,
-            fileExtension: name.split('.').pop(),
-            fileData: base64Data,
-            firebaseToken: firebaseToken,
-            paymentId: data?.invoicePyaments?.[0]?.id || 'defaultPaymentId',
-          });
+        await invoiceUploadData({
+          fileName: name,
+          fileMimetype: type,
+          fileExtension: name.split('.').pop(),
+          fileData: base64Data,
+          firebaseToken: firebaseToken,
+          paymentId: data?.invoicePyaments?.[0]?.id || 'defaultPaymentId',
+        });
 
-          // Force navigation refresh based on current screen
-          if (screenName === 'DueInvoice') {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'DueInvoice' }],
-            });
-            navigation.navigate('DueInvoice', { refresh: true });
-          } else {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'InvoiceScreen' }],
-            });
-          }
-
-          Toast.show({
-            type: 'success',
-            text1: 'Success',
-            text2: 'Invoice uploaded successfully'
-          });
-
-        } catch (uploadError) {
-          console.error('Upload error: ', uploadError);
-          Alert.alert('Error', 'Failed to upload the invoice');
-        }
+        onInvoiceChange(); // Trigger refresh after successful upload
       }
     } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('User canceled the picker');
-      } else {
+      if (!DocumentPicker.isCancel(err)) {
         console.error('Image pick error:', err);
-        Alert.alert('Error', 'Failed to pick the image');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to upload the file',
+        });
       }
-    }  }, [data, navigation, screenName]);  if (sessionUrl) {    return (
+    } finally {
+      setLoading(false); // Hide loading state
+    }
+  }, [data, onInvoiceChange]);
+
+  if (sessionUrl) {
+    return (
       <View style={styles.webviewContainer}>
         <WebView source={{uri: sessionUrl}} />
       </View>
@@ -315,9 +268,9 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
   const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${data?.id}`;
 
   return (
-    <View style={styles.container}>
-      {/* style={styles.container}
-      onPress={() => handleFullView('receipt_660e4a0a6cd2b.jpeg')}> */}
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => handleFullView('receipt_660e4a0a6cd2b.jpeg')}>
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicatorComponent />
@@ -400,13 +353,12 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
           </View>
         </View>
         <Text style={styles.paymentStatus}>
-          {data?.invoicePyaments?.[0]?.paymentStatus === 1 ? 'PAID' : data?.invoicePyaments?.[0]?.paymentStatus === 2 ? 'PARTIALLY PAID' : 'UNPAID'}
+          {data?.paymentStatus === 1
+            ? 'PAID'
+            : data?.paymentStatus === 2
+            ? 'PARTIALLY PAID'
+            : 'UNPAID'}
         </Text>
-        <TouchableOpacity
-          style={[styles.button, {marginLeft: '10%'}]}
-          onPress={() => console.log('View Invoice')}>
-          <Text style={styles.buttonText}>View Invoice</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.button, {marginLeft: '10%'}]}
           onPress={handlePickImage}>
@@ -469,7 +421,7 @@ const InvoiceComponent = ({data, onInvoiceChange, screenName}) => {
           </View>
         </View>
       </Modal>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -539,7 +491,7 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontWeight: 'bold',
-    color:'#555'
+    color: '#555',
   },
   rightSection: {
     flex: 6, // 70% width

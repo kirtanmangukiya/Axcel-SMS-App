@@ -162,10 +162,16 @@ const InvoiceScreen: React.FC = () => {
   const renderItem = useCallback(
     ({item}: {item: InvoiceItemResponce}) => (
       <View style={{marginVertical: 10, marginHorizontal: 15}}>
-        <InvoiceComponent data={item} onInvoiceChange={() => {}} />
+        <InvoiceComponent
+          data={item}
+          onInvoiceChange={() => {
+            setRefreshing(true);
+            loadData();
+          }}
+        />
       </View>
     ),
-    [],
+    [loadData],
   );
 
   const renderContent = useMemo(() => {
