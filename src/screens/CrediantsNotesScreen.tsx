@@ -114,7 +114,7 @@ const CredentialsNotesScreen: React.FC = () => {
   );
 
   const renderContent = () => {
-    const displayData = results ? data : fullData;
+    const displayData = results || fullData;
 
     if (loading) {
       return (

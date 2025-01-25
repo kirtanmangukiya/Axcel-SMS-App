@@ -184,29 +184,29 @@ const SearchScreen = () => {
       console.log('No search text entered');
       return;
     }
-  
+
     // Save the search term and update search history
     saveSearchTerm(searchText);
     setSearchTerms(prevTerms => [...prevTerms, searchText]);
-  
+
     // Filter the invoices based on the searchText
     const filteredInvoices = students.filter(invoice => {
-      const paymentTitle = invoice.invoicePyaments?.[0]?.paymentTitle?.toLowerCase();
+      const paymentTitle =
+        invoice.invoicePyaments?.[0]?.paymentTitle?.toLowerCase();
       const isMatch = paymentTitle?.includes(searchText.toLowerCase());
       return isMatch;
     });
-  
+
     // Navigate to InvoiceScreen with the filtered invoices
     navigation.dispatch(
       StackActions.push('InvoiceScreen', {
         results: filteredInvoices,
-      })
+      }),
     );
-  
+
     // Clear the search text after search is complete
     setSearchText('');
   };
-  
 
   const handleDueInvoicePress = () => {
     // console.log('Search initiated with text:', searchText);
@@ -271,18 +271,33 @@ const SearchScreen = () => {
       setSearchText('');
     }
   };
+
   const handlecreditNotesPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);
-          setSearchTerms(prevTerms => {
-            if (!prevTerms.includes(searchText)) {
-              return [...prevTerms, searchText];
-            }
-            return prevTerms;
-          }); 
-         const filteredInvoices = students.filter(invoice =>
-        invoice.fullName?.toLowerCase().includes(searchText.toLowerCase()),
-      );
+      setSearchTerms(prevTerms => {
+        if (!prevTerms.includes(searchText)) {
+          return [...prevTerms, searchText];
+        }
+        return prevTerms;
+      });
+
+      const searchLower = searchText.toLowerCase();
+
+      const filteredInvoices = students.filter(invoice => {
+        const fullNameMatch = invoice.fullName
+          ?.toLowerCase()
+          .includes(searchLower);
+        const titleMatch = invoice.invoicePyaments?.[0]?.paymentTitle
+          ?.toLowerCase()
+          .includes(searchLower);
+        const descMatch = invoice.invoicePyaments?.[0]?.paymentDescription
+          ?.toLowerCase()
+          .includes(searchLower);
+
+        return fullNameMatch || titleMatch || descMatch;
+      });
+
       const pushAction = StackActions.push('CredentialsNotesScreen', {
         results: filteredInvoices,
       });
@@ -290,6 +305,7 @@ const SearchScreen = () => {
       setSearchText('');
     }
   };
+
   const handleHomeWorkPress = () => {
     if (searchText) {
       saveSearchTerm(searchText);

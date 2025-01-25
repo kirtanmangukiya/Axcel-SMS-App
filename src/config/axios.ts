@@ -978,7 +978,7 @@ export async function creditNoteData(): Promise<CreditNoteApiResponce> {
     }
 
     const text = await response.text();
-    console.log('Response text:', text);
+    // console.log('Response text:', text);
 
     let data: CreditNoteApiResponce;
 
