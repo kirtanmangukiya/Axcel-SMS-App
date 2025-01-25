@@ -567,7 +567,7 @@ export async function classData(): Promise<classApiResponce> {
     if (!AUTH_TOKEN) {
       throw new Error('AUTH_TOKEN is not available');
     }
-    const response = await fetch(`${BASE_URL}classes/listAll`, {
+    const response = await fetch(`${BASE_URL}/classes/listAll`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
