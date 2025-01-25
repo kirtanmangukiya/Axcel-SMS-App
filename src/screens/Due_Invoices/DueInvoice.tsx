@@ -12,6 +12,8 @@ import {
   useNavigation,
   useIsFocused,
   CommonActions,
+  useRoute,
+  RouteProp,
 } from '@react-navigation/native';
 import {InvoiceItemResponce, MainStackParamList} from '../../types';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
@@ -35,6 +37,7 @@ const FETCH_COOLDOWN = 300000;
 const DueInvoice: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const route = useRoute<RouteProp<MainStackParamList, 'DueInvoice'>>();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -88,7 +91,7 @@ const DueInvoice: React.FC = () => {
 
   const loadData = async (loadMore = false) => {
     if (!isFocused) return;
-    
+
     if (!loadMore) {
       setLoading(true);
     }
@@ -125,13 +128,10 @@ const DueInvoice: React.FC = () => {
   };
 
   const handleRefreshPress = useCallback(() => {
-    const currentTime = Date.now();
-    if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
-      setRefreshing(true);
-      setLastFetchTime(currentTime);
-      checkInternetAndFetchData(false);
-    }
-  }, [lastFetchTime]);
+    setRefreshing(true);
+    navigation.setParams({results: undefined});
+    loadData();
+  }, [loadData, navigation]);
 
   const handleMenuPress = useCallback(() => {
     navigation.dispatch(DrawerActions.openDrawer());
@@ -147,8 +147,8 @@ const DueInvoice: React.FC = () => {
   const renderItem = useCallback(
     ({item}: {item: InvoiceItemResponce}) => (
       <View style={{marginVertical: 10, marginHorizontal: 15}}>
-        <InvoiceComponent 
-          data={item} 
+        <InvoiceComponent
+          data={item}
           onInvoiceChange={handleInvoiceChange}
           key={item.id + Date.now()}
           screenName="DueInvoice"
@@ -167,7 +167,9 @@ const DueInvoice: React.FC = () => {
       );
     }
 
-    if (invoiceData.length === 0) {
+    const displayData = route.params?.results || invoiceData;
+
+    if (displayData.length === 0) {
       return (
         <View style={styles.noDataContainer}>
           <NoDataFound noFoundTitle="No Data Found" />
@@ -177,7 +179,7 @@ const DueInvoice: React.FC = () => {
 
     return (
       <FlatList
-        data={invoiceData}
+        data={displayData}
         renderItem={renderItem}
         keyExtractor={item => `${item.id}-${Date.now()}`}
         showsVerticalScrollIndicator={false}
@@ -189,15 +191,16 @@ const DueInvoice: React.FC = () => {
             onRefresh={handleRefreshPress}
           />
         }
-        onEndReached={() => loadData(true)}
-        onEndReachedThreshold={0.5}
-        initialNumToRender={10}
-        windowSize={21}
-        maxToRenderPerBatch={10}
-        extraData={invoiceData}
       />
     );
-  }, [loading, invoiceData, refreshing, handleRefreshPress, renderItem]);
+  }, [
+    loading,
+    invoiceData,
+    refreshing,
+    handleRefreshPress,
+    renderItem,
+    route.params?.results,
+  ]);
 
   return (
     <ImageBackground

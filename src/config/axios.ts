@@ -735,13 +735,10 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
 
     // Read and log response text
     const text = await response.text();
-    console.log('API Response Text:', text);
-
     // Parse and return JSON data if available
     if (text.trim() !== '') {
       try {
         const data = JSON.parse(text);
-        console.log('Parsed API Response:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::', data);
         return data; // Return the parsed data
       } catch (jsonError) {
         console.error('JSON parse error:', jsonError, 'Response text:', text);
