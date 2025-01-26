@@ -1004,7 +1004,7 @@ export async function MediaCenterData(
   albumId?: number,
 ): Promise<MediaApiResponse> {
   try {
-    console.log('Debug: albumId parameter received:', albumId); // Log albumId to check if it's being passed correctly
+    // console.log('Debug: albumId parameter received:', albumId); 
 
     if (!AUTH_TOKEN) {
       await initializeAuthToken();
@@ -1019,8 +1019,7 @@ export async function MediaCenterData(
       ? `${BASE_URL}/media/listAll/${albumId}`
       : `${BASE_URL}/media/listAll`;
 
-    console.log('Debug: URL being called:', url); // Log the URL to check if the correct API endpoint is being called
-
+    // console.log('Debug: URL being called:', url);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -1035,14 +1034,13 @@ export async function MediaCenterData(
     }
 
     const text = await response.text();
-    console.log('Debug: Response text from API:', text); // Log the API response for debugging
-
+    // console.log('Debug: Response text from API:', text); 
     let data: MediaApiResponse;
 
     if (text.trim() !== '') {
       try {
         data = JSON.parse(text);
-        console.log('Debug: Parsed JSON data:', data); // Log the parsed data to confirm it's correct
+        // console.log('Debug: Parsed JSON data:', data); 
       } catch (jsonError) {
         console.error(
           'Debug: JSON parse error:',

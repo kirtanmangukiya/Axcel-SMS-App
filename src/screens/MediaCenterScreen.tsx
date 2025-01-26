@@ -1,33 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ImageBackground,
+  StyleSheet,
+} from 'react-native';
+import {DrawerActions, useNavigation} from '@react-navigation/native';
 import TopBar from '../components/TopBar';
-import { MediaCenterData } from '../config/axios'; // Assuming MediaCenterData supports albumId param
-import { MediaApiResponse } from '../types';
+import {MediaCenterData} from '../config/axios'; // Assuming MediaCenterData supports albumId param
+import {MediaApiResponse} from '../types';
 import AlbumsScreen from '../components/mediaCenterScreens/AlbumsScreen';
 import MediaScreen from '../components/mediaCenterScreens/MediaScreen';
 
 const MediaCenterScreen = () => {
-  const [selectedTab, setSelectedTab] = useState('ALBUMS');  // Default selected tab is ALBUMS
-  const [albumData, setAlbumData] = useState<MediaApiResponse | undefined>(undefined);
-  const [specificMediaData, setSpecificMediaData] = useState<any | undefined>(undefined);
+  const [selectedTab, setSelectedTab] = useState('ALBUMS'); // Default selected tab is ALBUMS
+  const [albumData, setAlbumData] = useState<MediaApiResponse | undefined>(
+    undefined,
+  );
+  const [specificMediaData, setSpecificMediaData] = useState<any | undefined>(
+    undefined,
+  );
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null);
   const navigation = useNavigation();
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // First API call without albumId to get all album data
         const generalAlbumData = await MediaCenterData();
-        setAlbumData(generalAlbumData);  // Save general data for the "ALBUMS" tab
-
-        // Second API call with albumId = 6 to get specific album data
-        const specificAlbumResponse = await MediaCenterData(6);
-        setSpecificMediaData(specificAlbumResponse?.media || []);  // Save media data for the "MEDIA" tab
-        console.log('Specific Album Data:', specificAlbumResponse);  // Log specific data to console
+        setAlbumData(generalAlbumData);
+        setLoading(false);
       } catch (error) {
         console.error(error);
-      } finally {
         setLoading(false);
       }
     };
@@ -44,36 +49,63 @@ const MediaCenterScreen = () => {
       return <Text style={styles.loadingText}>Loading...</Text>;
     }
     if (selectedTab === 'ALBUMS') {
-      return <AlbumsScreen albums={albumData?.albums || []} />;  // Render general album data
+      return (
+        <AlbumsScreen
+          albums={albumData?.albums || []}
+          onAlbumPress={handleAlbumPress}
+        />
+      );
     } else if (selectedTab === 'MEDIA') {
-      return <MediaScreen media={specificMediaData} />;  // Pass media data to the MediaScreen component
+      return <MediaScreen media={specificMediaData} />; // Pass media data to the MediaScreen component
     }
     return null;
   };
 
+  const handleAlbumPress = async (albumId: number) => {
+    try {
+      const specificAlbumData = await MediaCenterData(albumId);
+      setSpecificMediaData(specificAlbumData?.media || []);
+      setSelectedAlbumId(albumId);
+      setSelectedTab('MEDIA');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <ImageBackground
-      source={require('../assest/icons/SideBarBg.jpg')}  // Background image
-      style={styles.background}
-    >
+      source={require('../assest/icons/SideBarBg.jpg')} // Background image
+      style={styles.background}>
       {/* Top Bar with Menu Button */}
       <TopBar title="Media Center" onMenuPress={handleMenuPress} />
 
       {/* Tab Buttons for Albums and Media */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tabButton, selectedTab === 'ALBUMS' && styles.activeTab]}
-          onPress={() => setSelectedTab('ALBUMS')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'ALBUMS' && styles.activeTabText]}>
+          style={[
+            styles.tabButton,
+            selectedTab === 'ALBUMS' && styles.activeTab,
+          ]}
+          onPress={() => setSelectedTab('ALBUMS')}>
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === 'ALBUMS' && styles.activeTabText,
+            ]}>
             ALBUMS
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, selectedTab === 'MEDIA' && styles.activeTab]}
-          onPress={() => setSelectedTab('MEDIA')}
-        >
-          <Text style={[styles.tabText, selectedTab === 'MEDIA' && styles.activeTabText]}>
+          style={[
+            styles.tabButton,
+            selectedTab === 'MEDIA' && styles.activeTab,
+          ]}
+          onPress={() => setSelectedTab('MEDIA')}>
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === 'MEDIA' && styles.activeTabText,
+            ]}>
             MEDIA
           </Text>
         </TouchableOpacity>

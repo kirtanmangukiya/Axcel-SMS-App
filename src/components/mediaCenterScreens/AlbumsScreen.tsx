@@ -1,13 +1,27 @@
 import React from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 
-const AlbumsScreen = ({ albums }) => {
+interface AlbumsScreenProps {
+  albums: Array<any>;
+  onAlbumPress: (albumId: number) => void;
+}
+
+const AlbumsScreen: React.FC<AlbumsScreenProps> = ({albums, onAlbumPress}) => {
   const media_base_url = 'https://sms.psleprimary.com/uploads/media/';
 
-  const renderAlbumItem = ({ item: album }) => (
-    <TouchableOpacity style={styles.albumCard}>
+  const renderAlbumItem = ({item: album}) => (
+    <TouchableOpacity
+      style={styles.albumCard}
+      onPress={() => onAlbumPress(album.id)}>
       <Image
-        source={{ uri: `${media_base_url}${album?.albumImage}` }}
+        source={{uri: `${media_base_url}${album?.albumImage}`}}
         style={styles.albumImage}
       />
       <Text style={styles.albumTitle}>{album.albumTitle}</Text>
@@ -23,7 +37,7 @@ const AlbumsScreen = ({ albums }) => {
         <FlatList
           data={albums}
           renderItem={renderAlbumItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.flatListContainer}
         />
       ) : (
@@ -47,7 +61,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
@@ -58,10 +72,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   albumTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     marginTop: 5,
     textAlign: 'center',
+    color: '#333',
   },
   albumDescription: {
     fontSize: 14,
@@ -73,6 +88,9 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginTop: 20,
+  },
+  flatListContainer: {
+    paddingBottom: 16,
   },
 });
 

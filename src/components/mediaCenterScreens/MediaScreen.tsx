@@ -1,14 +1,23 @@
 import React from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 
-const MediaScreen = ({ media }: { media: Array<any> }) => {
-  const media_base_url = 'https://sms.psleprimary.com/uploads/media/';  // Update this as per your media path
+const MediaScreen = ({media}: {media: Array<any>}) => {
+  const media_base_url = 'https://sms.psleprimary.com/uploads/media/'; // Update this as per your media path
 
-  const renderMediaItem = ({ item: mediaItem }) => (
+  const renderMediaItem = ({item: mediaItem}) => (
     <TouchableOpacity style={styles.mediaCard}>
       {/* Media Image */}
       <Image
-        source={{ uri: `${media_base_url}${mediaItem?.mediaURL || mediaItem?.mediaURL}` }}  // Using thumb or mediaURL if thumb is unavailable
+        source={{
+          uri: `${media_base_url}${mediaItem?.mediaURL || mediaItem?.mediaURL}`,
+        }} // Using thumb or mediaURL if thumb is unavailable
         style={styles.mediaImage}
       />
       {/* Media Title */}
@@ -26,11 +35,13 @@ const MediaScreen = ({ media }: { media: Array<any> }) => {
         <FlatList
           data={media}
           renderItem={renderMediaItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.flatListContainer}
         />
       ) : (
-        <Text style={styles.noMediaText}>No media available</Text>
+        <Text style={styles.noMediaText}>
+          Please select an album to view content
+        </Text>
       )}
     </View>
   );
@@ -41,7 +52,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    marginTop:'2 %'
+    marginTop: '2%',
   },
   mediaCard: {
     backgroundColor: '#fff',
@@ -51,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
@@ -62,10 +73,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   mediaTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     marginTop: 5,
     textAlign: 'center',
+    color: '#333',
   },
   mediaDescription: {
     fontSize: 14,
@@ -74,14 +86,14 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   noMediaText: {
-    fontSize: 18,
-    color: '#888',
+    fontSize: 20,
+    color: '#fff',
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 50,
+    fontWeight: 'bold',
   },
   flatListContainer: {
     paddingBottom: 16,
   },
 });
-
 export default MediaScreen;

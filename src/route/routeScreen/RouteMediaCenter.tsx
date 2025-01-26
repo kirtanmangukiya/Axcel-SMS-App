@@ -46,17 +46,16 @@ const RouteMediaCenter = () => {
         component={ShowDataScreen}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="AlbumsScreen"
         component={AlbumsScreen}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="MediaScreen"
         component={MediaScreen}
         options={{headerShown: false}}
       />
-      
     </Stack.Navigator>
   );
 };
