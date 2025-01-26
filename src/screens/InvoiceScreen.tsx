@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback, useMemo} from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   FlatList,
@@ -15,9 +15,9 @@ import {
   RouteProp,
   useRoute,
 } from '@react-navigation/native';
-import {InvoiceData} from '../config/axios';
-import {InvoiceItemResponce, MainStackParamList} from '../types';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import { InvoiceData } from '../config/axios';
+import { InvoiceItemResponce, MainStackParamList } from '../types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
 import TopBar from '../components/TopBar';
@@ -39,7 +39,7 @@ const InvoiceScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(!results);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [invoiceData, setInvoiceData] = useState<InvoiceItemResponce[]>(
-    results || [],
+    results || []
   );
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -54,9 +54,11 @@ const InvoiceScreen: React.FC = () => {
       checkInternetAndFetchData(false);
     }
 
+    // Adding check for AppState to prevent refetch on app backgrounding
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (!isFiltered && nextAppState === 'active') {
         const currentTime = Date.now();
+        // Only fetch if more than 5 minutes have passed since last fetch
         if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
           setLastFetchTime(currentTime);
           checkInternetAndFetchData(false);
@@ -143,7 +145,7 @@ const InvoiceScreen: React.FC = () => {
 
   const handleRefreshPress = useCallback(() => {
     setRefreshing(true);
-    navigation.setParams({results: undefined});
+    navigation.setParams({ results: undefined });
     loadData(false);
   }, [loadData, navigation]);
 
@@ -160,8 +162,8 @@ const InvoiceScreen: React.FC = () => {
   }, [navigation]);
 
   const renderItem = useCallback(
-    ({item}: {item: InvoiceItemResponce}) => (
-      <View style={{marginVertical: 10, marginHorizontal: 15}}>
+    ({ item }: { item: InvoiceItemResponce }) => (
+      <View style={{ marginVertical: 10, marginHorizontal: 15 }}>
         <InvoiceComponent
           data={item}
           onInvoiceChange={() => {
@@ -231,7 +233,8 @@ const InvoiceScreen: React.FC = () => {
   return (
     <ImageBackground
       source={require('../assest/icons/SideBarBg.jpg')}
-      style={styles.background}>
+      style={styles.background}
+    >
       <View style={styles.container}>
         <TopBar
           title="Invoices"
