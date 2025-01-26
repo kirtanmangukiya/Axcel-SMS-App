@@ -45,10 +45,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         const filePath = `${base_url}/${fileName}`;
   
         if (fileExtension === 'pdf') {
-          navigation.navigate('PdfShowComponent', {
-            pdfUrl: fileName,
-            routeScreen: 'StudentProfileComponent',
-          });
+          navigation.navigate('PdfShowComponent', {pdfUrl: '661c9af674843.pdf'});
         } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
           // Show loading toast
           Toast.show({
@@ -93,9 +90,6 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     },
     [navigation],
   );
-  
-  
-  
 
   // const handleViewDoc = useCallback(
   //   async fileName => {
