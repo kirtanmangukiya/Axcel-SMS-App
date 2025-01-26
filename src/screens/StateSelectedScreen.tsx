@@ -45,11 +45,13 @@ const StateSelectedScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => navigation.navigate('ResourceAndGuide')}
           style={styles.imageContainer}>
-          <Image
-            source={require('../assest/icons/dash_stat_student.png')}
-            style={styles.image}
-          />
-          <Text style={styles.imageText}>Resource & Guide</Text>
+          <View style={styles.imageWrapper}>
+            <Image
+              source={require('../assest/icons/dash_stat_student.png')}
+              style={styles.image}
+            />
+            <Text style={styles.imageText}>Resource & Guide</Text>
+          </View>
           {/* Render the red circle with count */}
           {renderRedCircle(notificationCounts.resourceAndGuide)}
         </TouchableOpacity>
@@ -58,22 +60,26 @@ const StateSelectedScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => handleImagePress('NewsBoard')}
           style={styles.imageContainer}>
-          <Image
-            source={require('../assest/icons/dash_stat_teacher.jpg')}
-            style={styles.image}
-          />
-          <Text style={styles.imageText}>News Board</Text>
+          <View style={styles.imageWrapper}>
+            <Image
+              source={require('../assest/icons/dash_stat_teacher.jpg')}
+              style={styles.image}
+            />
+            <Text style={styles.imageText}>News Board</Text>
+          </View>
           {/* Render the red circle with count */}
           {renderRedCircle(notificationCounts.newsBoard)}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleImagePress('InvoiceScreen')}
           style={styles.imageContainer}>
-          <Image
-            source={require('../assest/icons/dash_stat_classes.jpg')}
-            style={styles.image}
-          />
-          <Text style={styles.imageText}>Invoice</Text>
+          <View style={styles.imageWrapper}>
+            <Image
+              source={require('../assest/icons/dash_stat_classes.jpg')}
+              style={styles.image}
+            />
+            <Text style={styles.imageText}>Invoice</Text>
+          </View>
           {/* Render the red circle with count */}
           {renderRedCircle(notificationCounts.invoice)}
         </TouchableOpacity>
@@ -102,6 +108,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative', // Needed for positioning the red circle and overlay
   },
+  imageWrapper: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   redCircle: {
     width: 25,
     height: 25,
@@ -119,17 +132,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
-  imageOverlay: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   image: {
     width: 100,
     height: 100,
     borderRadius: 50,
   },
   imageText: {
-    marginTop: 8,
+    position: 'absolute',
+    textAlign: 'center',
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
