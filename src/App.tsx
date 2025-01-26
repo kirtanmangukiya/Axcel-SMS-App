@@ -1,153 +1,202 @@
-import {Alert, AppState, AppStateStatus} from 'react-native';
-// App.tsx
+import {
+  AppState,
+  AppStateStatus,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
-import messaging, {
-  FirebaseMessagingTypes,
-} from '@react-native-firebase/messaging';
-import notifee, {AndroidImportance} from '@notifee/react-native';
-
+import messaging from '@react-native-firebase/messaging';
+import Toast from 'react-native-toast-message';
 import {NavigationContainer} from '@react-navigation/native';
 import Routes from './route';
-import Toast from 'react-native-toast-message';
-
-// Move setBackgroundMessageHandler outside of any component
-messaging().setBackgroundMessageHandler(
-  async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-    console.log(
-      'Background/quit state Notification:',
-      JSON.stringify(remoteMessage),
-    ); // Log message when app is in background or quit
-
-    // Display a notification
-    await notifee.displayNotification({
-      title: remoteMessage.notification?.title,
-      body: remoteMessage.notification?.body,
-      android: {
-        channelId: 'default',
-        importance: AndroidImportance.HIGH,
-        smallIcon: 'ic_launcher', // Make sure this icon exists in your project
-      },
-    });
-  },
-);
 
 const App: React.FC = () => {
   const navigationRef = useRef(null);
   const [appState, setAppState] = useState(AppState.currentState);
+  const [hasPermission, setHasPermission] = useState(false);
 
-  // Create the notification channel
+  const checkAndRequestPermissions = async () => {
+    // For Android 13 (API level 33) and above
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const androidPermission = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      );
+
+      if (androidPermission === PermissionsAndroid.RESULTS.DENIED) {
+        return false;
+      }
+    }
+
+    // For iOS and Android Firebase Messaging permissions
+    const authStatus = await messaging().requestPermission({
+      sound: true,
+      alert: true,
+      badge: true,
+      provisional: true, // Enable provisional authorization for iOS
+    });
+
+    return (
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL
+    );
+  };
+
   useEffect(() => {
-    const createNotificationChannel = async () => {
-      try {
-        const channelId = await notifee.createChannel({
-          id: 'default',
-          name: 'Default Channel',
-          importance: AndroidImportance.HIGH,
-        });
-        console.log('Notification channel created with ID:', channelId);
-      } catch (error) {
-        console.error('Error creating notification channel:', error);
+    const setupNotifications = async () => {
+      const permissionGranted = await checkAndRequestPermissions();
+      setHasPermission(permissionGranted);
+
+      if (permissionGranted) {
+        if (Platform.OS === 'android') {
+          await messaging().createChannel({
+            id: 'default',
+            name: 'Default Channel',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibration: true,
+          });
+        }
+
+        const token = await messaging().getToken();
+        console.log('FCM Token:', token);
       }
     };
 
-    createNotificationChannel();
-  }, []);
-
-  // Listen to AppState changes
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      setAppState(nextAppState);
-      console.log('App State:', nextAppState);
-    };
-
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
-
-    return () => {
-      subscription.remove(); // Clean up listener on unmount
-    };
-  }, []);
-
-  useEffect(() => {
-    const getToken = async () => {
-      const token = await messaging().getToken();
-      console.log('FCM Token:::::::::::::::::::::::::::::::::', token);
-    };
-    getToken();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
-    });
-
-    return unsubscribe;
+    setupNotifications();
   }, []);
   
-
-  // Listen to foreground messages
   useEffect(() => {
-    console.log('.........................................................',appState);
-    
-    const unsubscribe = messaging().onMessage(
-      async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-        console.log('Foreground Notification:', JSON.stringify(remoteMessage)); // Log message when app is in foreground
-
-        if (appState === 'active') {
-          try {
-            await notifee.displayNotification({
-              title: remoteMessage.notification?.title,
-              body: remoteMessage.notification?.body,
-              android: {
-                channelId: 'default',
-                importance: AndroidImportance.HIGH,
-                smallIcon: 'ic_launcher', // Ensure this icon exists
-              },
-            });
-            console.log(
-              'Foreground notification displayed with default sound.',
-            );
-          } catch (error) {
-            console.error('Error displaying notification:', error);
-          }
-        }
-      }, 
-    );
-
-    return unsubscribe; // Clean up the listener on unmount
-  }, [appState]);
-
-  // Request notification permission and get FCM token
-  useEffect(() => {
-    const requestUserPermission = async () => {
+    const requestNotificationPermission = async () => {
       try {
-        const authStatus = await messaging().requestPermission();
+        // Check if physical device
+        const authStatus = await messaging().requestPermission({
+          sound: true,
+          alert: true,
+          badge: true,
+        });
+
         const enabled =
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        setHasPermission(enabled);
 
         if (enabled) {
-          console.log('Notification permission granted:', authStatus);
+          // Create notification channel for Android
+          if (Platform.OS === 'android') {
+            await messaging().createChannel({
+              id: 'default',
+              name: 'Default Channel',
+              importance: messaging.Android.Importance.HIGH,
+              sound: 'default',
+              vibration: true,
+            });
+          }
 
-          // Get the FCM device token
           const token = await messaging().getToken();
-          console.log('FCM Token:', token);
-          // TODO: Send this token to your server for sending notifications
-        } else {
-          console.log('Notification permission not granted');
+          // Store token in your backend here
         }
       } catch (error) {
-        console.error('Error requesting notification permission:', error);
+        console.error('Notification permission error:', error);
       }
     };
 
-    requestUserPermission();
+    requestNotificationPermission();
   }, []);
 
+  // Enhanced app state handling
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setAppState(nextAppState);
+      if (nextAppState === 'active' && Platform.OS === 'ios') {
+        messaging().setBadgeCount(0); // Only for iOS
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Enhanced foreground notification handling
+  useEffect(() => {
+    if (!hasPermission) return;
+
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      const {notification, data} = remoteMessage;
+
+      if (appState === 'active') {
+        Toast.show({
+          type: data?.type || 'info',
+          text1: notification?.title || '',
+          text2: notification?.body || '',
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          onPress: () => {
+            // Handle notification tap
+            if (data?.screen) {
+              navigationRef.current?.navigate(data.screen, data.params);
+            }
+          },
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [appState, hasPermission]);
+
+  // Enhanced background notification handling
+  useEffect(() => {
+    if (!hasPermission) return;
+
+    messaging().setBackgroundMessageHandler(async remoteMessage => {
+      const {notification, data} = remoteMessage;
+
+      await messaging().displayNotification({
+        title: notification?.title,
+        body: notification?.body,
+        android: {
+          channelId: 'default',
+          importance: messaging.Android.Importance.HIGH,
+          priority: messaging.Android.Importance.HIGH,
+          smallIcon: 'ic_notification',
+          largeIcon: data?.largeIcon,
+          sound: 'default',
+          vibrate: true,
+          pressAction: {
+            id: 'default',
+          },
+        },
+        ios: {
+          sound: 'default',
+        },
+        data: data,
+      });
+    });
+
+    // Handle notification open event
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      if (remoteMessage.data?.screen) {
+        navigationRef.current?.navigate(
+          remoteMessage.data.screen,
+          remoteMessage.data.params,
+        );
+      }
+    });
+
+    // Check initial notification
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage?.data?.screen) {
+          navigationRef.current?.navigate(
+            remoteMessage.data.screen,
+            remoteMessage.data.params,
+          );
+        }
+      });
+  }, [hasPermission]);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Routes />
       <Toast />
     </NavigationContainer>
@@ -155,165 +204,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-// App.tsx
-// import React, {useRef, useEffect, useState} from 'react';
-// import {AppState, AppStateStatus, Button, View} from 'react-native';
-// import {NavigationContainer} from '@react-navigation/native';
-// import Routes from './route';
-// import Toast from 'react-native-toast-message';
-// import messaging, {
-//   FirebaseMessagingTypes,
-// } from '@react-native-firebase/messaging';
-// import notifee, {AndroidImportance} from '@notifee/react-native';
-
-// // Move setBackgroundMessageHandler outside of any component
-// messaging().setBackgroundMessageHandler(
-//   async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-//     console.log(
-//       'Background/quit state Notification:',
-//       JSON.stringify(remoteMessage),
-//     ); // Log message when app is in background or quit
-
-//     // Display a notification
-//     await notifee.displayNotification({
-//       title: remoteMessage.notification?.title,
-//       body: remoteMessage.notification?.body,
-//       android: {
-//         channelId: 'default',
-//         importance: AndroidImportance.HIGH,
-//         smallIcon: 'ic_launcher', // Make sure this icon exists in your project
-//       },
-//     });
-//   },
-// );
-
-// const App: React.FC = () => {
-//   const navigationRef = useRef(null);
-//   const [appState, setAppState] = useState(AppState.currentState);
-
-//   // Create the notification channel
-//   useEffect(() => {
-//     const createNotificationChannel = async () => {
-//       try {
-//         const channelId = await notifee.createChannel({
-//           id: 'default',
-//           name: 'Default Channel',
-//           importance: AndroidImportance.HIGH,
-//         });
-//         console.log('Notification channel created with ID:', channelId);
-//       } catch (error) {
-//         console.error('Error creating notification channel:', error);
-//       }
-//     };
-
-//     createNotificationChannel();
-//   }, []);
-
-//   // Listen to AppState changes
-//   useEffect(() => {
-//     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-//       setAppState(nextAppState);
-//       console.log('App State:', nextAppState);
-//     };
-
-//     const subscription = AppState.addEventListener(
-//       'change',
-//       handleAppStateChange,
-//     );
-
-//     return () => {
-//       subscription.remove(); // Clean up listener on unmount
-//     };
-//   }, []);
-
-//   // Listen to foreground messages
-//   useEffect(() => {
-//     const unsubscribe = messaging().onMessage(
-//       async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-//         console.log('Foreground Notification:', JSON.stringify(remoteMessage)); // Log message when app is in foreground
-
-//         if (appState === 'active') {
-//           try {
-//             await notifee.displayNotification({
-//               title: remoteMessage.notification?.title,
-//               body: remoteMessage.notification?.body,
-//               android: {
-//                 channelId: 'default',
-//                 importance: AndroidImportance.HIGH,
-//                 smallIcon: 'ic_launcher', // Ensure this icon exists
-//               },
-//             });
-//             console.log(
-//               'Foreground notification displayed with default sound.',
-//             );
-//           } catch (error) {
-//             console.error('Error displaying notification:', error);
-//           }
-//         }
-//       },
-//     );
-
-//     return unsubscribe; // Clean up the listener on unmount
-//   }, [appState]);
-
-//   // Request notification permission and get FCM token
-//   useEffect(() => {
-//     const requestUserPermission = async () => {
-//       try {
-//         const authStatus = await messaging().requestPermission();
-//         const enabled =
-//           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-//           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-//         if (enabled) {
-//           console.log('Notification permission granted:', authStatus);
-
-//           // Get the FCM device token
-//           const token = await messaging().getToken();
-//           console.log('FCM Token:', token);
-//           // TODO: Send this token to your server for sending notifications
-//         } else {
-//           console.log('Notification permission not granted');
-//         }
-//       } catch (error) {
-//         console.error('Error requesting notification permission:', error);
-//       }
-//     };
-
-//     requestUserPermission();
-//   }, []);
-
-//   // Manual test function to trigger a test notification
-//   const triggerTestNotification = async () => {
-//     try {
-//       await notifee.displayNotification({
-//         title: 'Test Notification',
-//         body: 'This is a test notification from the app.',
-//         android: {
-//           channelId: 'default',
-//           importance: AndroidImportance.HIGH,
-//           smallIcon: 'ic_launcher',
-//         },
-//       });
-//       console.log('Test notification displayed.');
-//     } catch (error) {
-//       console.error('Error displaying test notification:', error);
-//     }
-//   };
-
-//   return (
-//     <NavigationContainer>
-//       <Routes />
-//       <Toast />
-//       {/* Button to manually trigger a test notification */}
-//       <View style={{padding: 20}}>
-//         <Button
-//           title="Trigger Test Notification"
-//           onPress={triggerTestNotification}
-//         />
-//       </View>
-//     </NavigationContainer>
-//   );
-// };
-
-// export default App;
