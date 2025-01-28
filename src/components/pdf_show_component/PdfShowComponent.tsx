@@ -18,6 +18,7 @@ import {MainStackParamList} from '../../types';
 const baseUrlforNewsPdf = 'https://sms.psleprimary.com/uploads/news/';
 const baseUrlforStudentPdf =
   'https://sms.psleprimary.com/uploads/student_docs/';
+const baseInvoiceUrl = 'https://sms.psleprimary.com/uploads/user_receipts/';
 
 type PDFViewerProps = NativeStackScreenProps<
   MainStackParamList,
@@ -26,14 +27,19 @@ type PDFViewerProps = NativeStackScreenProps<
 
 const PdfShowComponent: React.FC<PDFViewerProps> = ({route, navigation}) => {
   const {pdfUrl} = route.params;
-
+  const routes = navigation.getState()?.routes;
+  const prevRoute = routes[routes.length - 2];
+  console.log('1234567----->', route.params);
+  console.log('11----->', prevRoute);
   const fullPdfUrl =
-    route?.params?.routeScreen === 'StudentProfileComponent'
+    prevRoute?.name === 'StudentProfileComponent'
       ? `${baseUrlforStudentPdf}${pdfUrl}`
+      : prevRoute?.name === 'InvoiceScreen' || prevRoute?.name === 'DueInvoice'
+      ? `${baseInvoiceUrl}${pdfUrl}`
       : `${baseUrlforNewsPdf}${pdfUrl}`;
   const [isDownloading, setIsDownloading] = useState(true);
 
-  console.log('pdf show url in pdf show compoent ', fullPdfUrl);
+  console.log('pdf show url in pdf show compoent---------> ', fullPdfUrl);
 
   const downloadAndOpenPdf = async () => {
     const {fs} = RNFetchBlob;

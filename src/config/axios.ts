@@ -670,7 +670,6 @@ export async function InvoiceData(page: number): Promise<InvoiceResponse> {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Network response was not ok: ${errorText}`);
@@ -678,6 +677,7 @@ export async function InvoiceData(page: number): Promise<InvoiceResponse> {
 
     const text = await response.text();
     let data: InvoiceResponse;
+    console.log("invoice response----------->", JSON.stringify(data, null, 2));
 
     if (text.trim() !== '') {
       try {
@@ -1075,8 +1075,9 @@ export async function StudentsData(page: number): Promise<StudentApiRespoce> {
     }
 
     // Construct and log the API URL
-    const apiUrl = `${BASE_URL}/students/listAll/${page}`;
+    const apiUrl = `${BASE_URL}students/listAll/${page}`;
     console.log('Fetching data from API:', apiUrl); // Log the API URL
+    console.log()
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -1092,6 +1093,7 @@ export async function StudentsData(page: number): Promise<StudentApiRespoce> {
     }
 
     const text = await response.text();
+    console.log('Response text:-->', text);
     let data: StudentApiRespoce;
 
     if (text.trim() !== '') {

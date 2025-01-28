@@ -118,7 +118,7 @@ const NewsBoardComponent: React.FC<NewsBoardProps> = ({data}) => {
   };
 
   const openPdf = (url: string) => {
-    console.log(url);
+    console.log('url------------------->',url);
 
     navigation.navigate('PdfShowComponent', {pdfUrl: url});
   };

@@ -111,6 +111,7 @@ const StudentScreen: React.FC = () => {
 
     try {
       const response = await StudentsData(pageNumber); // Fetch data from API
+      console.log('response------>', response);
       if (response?.students?.length) {
         setData(prevData => ({
           ...prevData,

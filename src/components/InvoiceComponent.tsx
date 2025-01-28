@@ -43,9 +43,12 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         const fileExtension = fileName.split('.').pop().toLowerCase();
         const base_url = 'https://sms.psleprimary.com/uploads/user_receipts';
         const filePath = `${base_url}/${fileName}`;
+        console.log('file path ', filePath);
+        console.log('file name: ', fileName);
+        
   
         if (fileExtension === 'pdf') {
-          navigation.navigate('PdfShowComponent', {pdfUrl: '661c9af674843.pdf'});
+          navigation.navigate('PdfShowComponent', {pdfUrl: fileName});
         } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
           // Show loading toast
           Toast.show({

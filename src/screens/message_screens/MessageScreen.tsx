@@ -160,12 +160,13 @@ const MessageScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefreshPress}
+              tintColor="#000000"
             />
           }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.1}
           ListFooterComponent={
-            isLoadingMore ? <ActivityIndicator size="small" /> : null
+            isLoadingMore ? <ActivityIndicator size="small" color="#000000" /> : null
           }
         />
       );
@@ -181,13 +182,13 @@ const MessageScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefreshPress}
+              tintColor="#000000"
             />
           }
         />
       );
     }
   };
-
   return (
     <View style={{flex: 1}}>
       <TopBarAssignment
