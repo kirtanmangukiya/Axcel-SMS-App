@@ -65,7 +65,7 @@ const TeachersScreen: React.FC = () => {
     console.log('Refresh icon pressed');
     setRefreshing(true);
     setCurrentPage(1);
-    setResults(undefined); // Clear the results to load full data
+    setResults(undefined);
     loadData(1);
   }, []);
 
@@ -89,18 +89,24 @@ const TeachersScreen: React.FC = () => {
       }
 
       const response = await TeacherData(page);
-      const itemsPerPage = response.itemsPerPage || 10; // Use API's itemsPerPage or default to 10
+      const itemsPerPage = 10;
 
       if (page === 1) {
-        setData(response);
-      } else {
+        // Access the data array inside teachers object
+        setData({
+          ...response,
+          teachers: response.teachers.data || [],
+        });
+      } else if (response && response.teachers.data) {
         setData(prevData => {
-          if (!prevData) {
-            return response;
+          if (!prevData || !prevData.teachers) {
+            return {
+              ...response,
+              teachers: response.teachers.data || [],
+            };
           }
 
-          // Check for duplicates by item id
-          const newTeachers = response.teachers.filter(
+          const newTeachers = response.teachers.data.filter(
             newTeacher =>
               !prevData.teachers.some(
                 existingTeacher => existingTeacher.id === newTeacher.id,
@@ -111,15 +117,16 @@ const TeachersScreen: React.FC = () => {
             ...prevData,
             teachers: [...prevData.teachers, ...newTeachers],
             totalItems: response.totalItems,
-            roles: response.roles,
           };
         });
       }
 
-      const calculatedTotalPages = Math.ceil(
-        response.totalItems / itemsPerPage,
-      );
-      setTotalPages(calculatedTotalPages);
+      if (response && response.teachers.total) {
+        const calculatedTotalPages = Math.ceil(
+          response.teachers.total / itemsPerPage,
+        );
+        setTotalPages(calculatedTotalPages);
+      }
     } catch (error) {
       console.log('Error loading data:', error);
     } finally {
@@ -176,7 +183,7 @@ const TeachersScreen: React.FC = () => {
         <View style={styles.activityIndicatorContainer}>
           <ActivityIndacatorr />
         </View>
-      ) : data?.teachers?.length === 0 ? (
+      ) : !data?.teachers || data.teachers.length === 0 ? (
         <NoDataFound noFoundTitle="Data Not Found" />
       ) : (
         <FlatList
