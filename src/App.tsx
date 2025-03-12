@@ -9,6 +9,7 @@ import messaging from '@react-native-firebase/messaging';
 import Toast from 'react-native-toast-message';
 import {NavigationContainer} from '@react-navigation/native';
 import Routes from './route';
+import { NotificationProvider } from './utils/NotificationContext';
 
 const App: React.FC = () => {
   const navigationRef = useRef(null);
@@ -64,7 +65,7 @@ const App: React.FC = () => {
 
     setupNotifications();
   }, []);
-  
+
   useEffect(() => {
     const requestNotificationPermission = async () => {
       try {
@@ -122,6 +123,11 @@ const App: React.FC = () => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       const {notification, data} = remoteMessage;
 
+      // Update notification count based on notification type
+      if (data?.notificationType) {
+        updateCount(data.notificationType, 1);
+      }
+
       if (appState === 'active') {
         Toast.show({
           type: data?.type || 'info',
@@ -131,9 +137,10 @@ const App: React.FC = () => {
           visibilityTime: 4000,
           autoHide: true,
           onPress: () => {
-            // Handle notification tap
             if (data?.screen) {
               navigationRef.current?.navigate(data.screen, data.params);
+              // Reset count when notification is pressed
+              resetCount(data.notificationType);
             }
           },
         });
@@ -142,7 +149,6 @@ const App: React.FC = () => {
 
     return unsubscribe;
   }, [appState, hasPermission]);
-
   // Enhanced background notification handling
   useEffect(() => {
     if (!hasPermission) return;
@@ -196,10 +202,12 @@ const App: React.FC = () => {
   }, [hasPermission]);
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      <Routes />
-      <Toast />
-    </NavigationContainer>
+    <NotificationProvider>
+      <NavigationContainer ref={navigationRef}>
+        <Routes />
+        <Toast />
+      </NavigationContainer>
+    </NotificationProvider>
   );
 };
 

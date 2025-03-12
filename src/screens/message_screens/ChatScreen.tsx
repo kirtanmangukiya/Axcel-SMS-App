@@ -1,5 +1,13 @@
 import React, {useState, useCallback, useEffect} from 'react';
-import {View, Text, Image, StyleSheet, ActivityIndicator} from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  useColorScheme,
+} from 'react-native';
 import {
   GiftedChat,
   IMessage,
@@ -13,6 +21,9 @@ import {RouteProp, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ChatItem, RootStackParamList} from '../../types';
 import {listBeforeMessages, newMessageCreateAddData} from '../../config/axios';
+import {useNavigation} from '@react-navigation/native';
+import back from 'react-native-vector-icons/AntDesign';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 interface User {
   _id: string | number;
@@ -34,7 +45,7 @@ const Header = styled.View`
 `;
 
 const HeaderText = styled.Text`
-  color: white;
+  color: #ffffff;
   font-size: 18px;
   font-weight: bold;
   margin-left: 10px;
@@ -42,10 +53,22 @@ const HeaderText = styled.Text`
 
 const Container = styled.View`
   flex: 1;
-  background-color: #f5f5f5;
+  background-color: ${props => props.theme.mode === 'dark' ? '#121212' : '#f5f5f5'};
+`;
+
+const BackButton = styled.TouchableOpacity`
+  padding: 8px;
+`;
+
+const BackIcon = styled.Image`
+  width: 24px;
+  height: 24px;
+  tintcolor: #ffffff;
 `;
 
 export function ChatScreen() {
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
   const route = useRoute<ChatScreenRouteProp>();
   const {data} = route.params;
   const [loading, setLoading] = useState<boolean>(true);
@@ -53,6 +76,7 @@ export function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userId, setUserId] = useState<string | number | null>(null);
   console.log('check the route ', data);
+  const navigation = useNavigation();
 
   const loadData = async () => {
     try {
@@ -72,14 +96,14 @@ export function ChatScreen() {
             _id: msg.id,
             text: msg.messageText,
             createdAt: msg.dateSent
-              ? new Date(msg.dateSent * 1000) // Assuming dateSent is a Unix timestamp
+              ? new Date(msg.dateSent * 1000)
               : new Date(),
             user: {
-              _id: msg.fromId, // Ensure this is the ID of the message sender
+              _id: msg.fromId,
               name: msg.fullName,
               avatar: msg.photo ? `path_to_images/${msg.photo}` : undefined,
             },
-            dateSentH: msg.dateSentH, // Include the human-readable date from the backend
+            dateSentH: msg.dateSentH,
           }));
           setMessages(formattedMessages);
         }
@@ -95,9 +119,9 @@ export function ChatScreen() {
   useEffect(() => {
     loadData();
     const interval = setInterval(() => {
-      loadData(); 
-    }, 5000); 
-    return () => clearInterval(interval); 
+      loadData();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const sendMessage = async (newMessages: IMessage[] = []) => {
@@ -120,7 +144,7 @@ export function ChatScreen() {
             createdAt: new Date(),
             user: {
               ...msg.user,
-              _id: currentUserId, // Ensure this is the ID of the current user
+              _id: currentUserId,
               avatar:
                 typeof msg.user.avatar === 'string'
                   ? msg.user.avatar
@@ -144,14 +168,24 @@ export function ChatScreen() {
   }, []);
 
   const renderInputToolbar = (props: InputToolbarProps<IMessage>) => {
-    return <InputToolbar {...props} containerStyle={styles.inputToolbar} />;
+    return (
+      <InputToolbar
+        {...props}
+        containerStyle={[
+          styles.inputToolbar,
+          isDarkMode && {backgroundColor: '#333333', borderTopColor: '#444444'},
+        ]}
+      />
+    );
   };
 
   const renderSend = (props: SendProps<IMessage>) => {
     return (
       <Send {...props}>
         <View style={styles.sendContainer}>
-          <Text style={styles.sendText}>Send</Text>
+          <Text style={[styles.sendText, isDarkMode && {color: '#4a9eff'}]}>
+            Send
+          </Text>
         </View>
       </Send>
     );
@@ -168,6 +202,16 @@ export function ChatScreen() {
   return (
     <Container>
       <Header>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <View>
+            <AntDesign
+              name="arrowleft"
+              size={24}
+              color="#ffffff"
+              style={{marginRight: 10}}
+            />
+          </View>
+        </TouchableOpacity>
         <Image
           source={require('../../assest/icons/download.jpg')}
           style={styles.avatar}
@@ -182,6 +226,8 @@ export function ChatScreen() {
         renderSend={renderSend}
         onRefresh={onRefresh}
         isLoadingEarlier={refreshing}
+        textStyle={{color: isDarkMode ? '#ffffff' : '#000000'}}
+        timeTextStyle={{color: isDarkMode ? '#cccccc' : '#666666'}}
       />
     </Container>
   );
@@ -192,6 +238,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    marginLeft: 10,
   },
   inputToolbar: {
     backgroundColor: 'white',

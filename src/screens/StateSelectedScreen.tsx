@@ -1,29 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types'; // Adjust the import path as needed
+import React, {useState, useEffect} from 'react';
+import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
+import {useNavigation, NavigationProp} from '@react-navigation/native';
+import {RootStackParamList} from '../types'; // Adjust the import path as needed
+import {useNotifications} from '../utils/NotificationContext';
 
 const StateSelectedScreen: React.FC = () => {
+  const {counts, resetCount} = useNotifications();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  // State for notification counts (replace with your actual data)
-  const [notificationCounts, setNotificationCounts] = useState({
-    resourceAndGuide: 0,
-    newsBoard: 0,
-    invoice: 0,
-  });
-
-  // Simulating notification count updates (You can replace this with actual logic)
-  useEffect(() => {
-    // Example: Simulating notification counts for each category
-    setNotificationCounts({
-      resourceAndGuide: 0,  // 0 notifications for Resource & Guide
-      newsBoard: 0,         // No notifications for News Board
-      invoice: 2,           // 2 notifications for Invoice
-    });
-  }, []);
-
   const handleImagePress = (screenName: keyof RootStackParamList) => {
+    // Reset notification count when entering screen
+    switch (screenName) {
+      case 'ResourceAndGuide':
+        resetCount('resourceAndGuide');
+        break;
+      case 'NewsBoard':
+        resetCount('newsBoard');
+        break;
+      case 'InvoiceScreen':
+        resetCount('invoice');
+        break;
+    }
     navigation.navigate(screenName);
   };
 
@@ -31,19 +28,18 @@ const StateSelectedScreen: React.FC = () => {
     if (count > 0) {
       return (
         <View style={styles.redCircle}>
-          {/* Ensure the count is wrapped inside a Text component */}
           <Text style={styles.redCircleText}>{count}</Text>
         </View>
       );
     }
-    return null; // Do not render red circle if count is 0
+    return null;
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.imageRow}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('ResourceAndGuide')}
+          onPress={() => handleImagePress('ResourceAndGuide')}
           style={styles.imageContainer}>
           <View style={styles.imageWrapper}>
             <Image
@@ -52,11 +48,9 @@ const StateSelectedScreen: React.FC = () => {
             />
             <Text style={styles.imageText}>Resource & Guide</Text>
           </View>
-          {/* Render the red circle with count */}
-          {renderRedCircle(notificationCounts.resourceAndGuide)}
+          {renderRedCircle(counts.resourceAndGuide)}
         </TouchableOpacity>
 
-        {/* News Board */}
         <TouchableOpacity
           onPress={() => handleImagePress('NewsBoard')}
           style={styles.imageContainer}>
@@ -67,8 +61,7 @@ const StateSelectedScreen: React.FC = () => {
             />
             <Text style={styles.imageText}>News Board</Text>
           </View>
-          {/* Render the red circle with count */}
-          {renderRedCircle(notificationCounts.newsBoard)}
+          {renderRedCircle(counts.newsBoard)}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleImagePress('InvoiceScreen')}
@@ -80,8 +73,7 @@ const StateSelectedScreen: React.FC = () => {
             />
             <Text style={styles.imageText}>Invoice</Text>
           </View>
-          {/* Render the red circle with count */}
-          {renderRedCircle(notificationCounts.invoice)}
+          {renderRedCircle(counts.invoice)}
         </TouchableOpacity>
       </View>
     </View>

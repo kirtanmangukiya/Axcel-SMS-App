@@ -677,7 +677,7 @@ export async function InvoiceData(page: number): Promise<InvoiceResponse> {
 
     const text = await response.text();
     let data: InvoiceResponse;
-    console.log("invoice response----------->", JSON.stringify(data, null, 2));
+    console.log('invoice response----------->', JSON.stringify(data, null, 2));
 
     if (text.trim() !== '') {
       try {
@@ -700,7 +700,8 @@ export async function InvoiceData(page: number): Promise<InvoiceResponse> {
   }
 }
 
-export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
+export async function DueInvoiceData(): Promise<any> {
+  // No need to pass 'page'
   console.log('Calling DueInvoice API function');
 
   try {
@@ -714,18 +715,21 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
     }
 
     const params = new URLSearchParams({
-      "searchInput[dueInv]": true,
-      "page": 1
+      'searchInput[dueInv]': true,
+      page: 1,
     });
 
     // Make the API request
-    const response = await fetch(`${BASE_URL}/invoices/listAll?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+    const response = await fetch(
+      `${BASE_URL}/invoices/listAll?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+        },
       },
-    });
+    );
 
     // Check if response is not OK
     if (!response.ok) {
@@ -752,7 +756,6 @@ export async function DueInvoiceData(): Promise<any> { // No need to pass 'page'
     throw error;
   }
 }
-
 
 export async function EventData(): Promise<EventApiResponse> {
   try {
@@ -1004,7 +1007,7 @@ export async function MediaCenterData(
   albumId?: number,
 ): Promise<MediaApiResponse> {
   try {
-    // console.log('Debug: albumId parameter received:', albumId); 
+    // console.log('Debug: albumId parameter received:', albumId);
 
     if (!AUTH_TOKEN) {
       await initializeAuthToken();
@@ -1034,13 +1037,13 @@ export async function MediaCenterData(
     }
 
     const text = await response.text();
-    // console.log('Debug: Response text from API:', text); 
+    // console.log('Debug: Response text from API:', text);
     let data: MediaApiResponse;
 
     if (text.trim() !== '') {
       try {
         data = JSON.parse(text);
-        // console.log('Debug: Parsed JSON data:', data); 
+        // console.log('Debug: Parsed JSON data:', data);
       } catch (jsonError) {
         console.error(
           'Debug: JSON parse error:',
@@ -1077,7 +1080,7 @@ export async function StudentsData(page: number): Promise<StudentApiRespoce> {
     // Construct and log the API URL
     const apiUrl = `${BASE_URL}students/listAll/${page}`;
     console.log('Fetching data from API:', apiUrl); // Log the API URL
-    console.log()
+    console.log();
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -2539,11 +2542,13 @@ export async function listBeforeMessages(
       throw new Error('JSON parse error');
     }
   } catch (error) {
-    console.error('Fetch user data failed:', error.message);
+    console.error(
+      'Fetch user data failed:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
     throw error; // Re-throw the error to allow it to be caught further up the call stack
   }
 }
-
 export async function resourceAndGuideData(): Promise<resourceAndGuideApiResponce> {
   try {
     if (!AUTH_TOKEN) {
