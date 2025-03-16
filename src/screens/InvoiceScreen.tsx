@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View,
   FlatList,
@@ -15,15 +15,16 @@ import {
   RouteProp,
   useRoute,
 } from '@react-navigation/native';
-import { InvoiceData } from '../config/axios';
-import { InvoiceItemResponce, MainStackParamList } from '../types';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {InvoiceData} from '../config/axios';
+import {InvoiceItemResponce, MainStackParamList} from '../types';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
 import TopBar from '../components/TopBar';
 import NoDataFound from '../components/no_data_found/NoDataFound';
 import ActivityIndacatorr from '../components/activity_indicator/ActivityIndacatorr';
 import InvoiceComponent from '../components/InvoiceComponent';
+import {debounce} from 'lodash';
 
 type InvoiceScreenNavigationProp = NativeStackNavigationProp<
   MainStackParamList,
@@ -39,7 +40,7 @@ const InvoiceScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(!results);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [invoiceData, setInvoiceData] = useState<InvoiceItemResponce[]>(
-    results || []
+    results || [],
   );
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -47,18 +48,18 @@ const InvoiceScreen: React.FC = () => {
   const [isFiltered, setIsFiltered] = useState<boolean>(!!results);
   const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
   const [seenIds] = useState(() => new Set<string>());
+  const [retryCount, setRetryCount] = useState(0);
   const FETCH_COOLDOWN = 300000;
+  const MAX_RETRIES = 3;
 
   useEffect(() => {
     if (!isFiltered && !results && !invoiceData.length) {
       checkInternetAndFetchData(false);
     }
 
-    // Adding check for AppState to prevent refetch on app backgrounding
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (!isFiltered && nextAppState === 'active') {
         const currentTime = Date.now();
-        // Only fetch if more than 5 minutes have passed since last fetch
         if (currentTime - lastFetchTime > FETCH_COOLDOWN) {
           setLastFetchTime(currentTime);
           checkInternetAndFetchData(false);
@@ -92,8 +93,8 @@ const InvoiceScreen: React.FC = () => {
     [isFiltered],
   );
 
-  const loadData = async (isPagination: boolean) => {
-    if (loadingMore || (!hasMore && isPagination)) return;
+  const loadData = async (isPagination: boolean = false, retry: number = 0) => {
+    if (loadingMore || (isPagination && !hasMore)) return;
 
     if (isPagination) {
       setLoadingMore(true);
@@ -105,37 +106,49 @@ const InvoiceScreen: React.FC = () => {
     }
 
     try {
-      const currentPage = isPagination ? page + 1 : 1;
-      const data = await InvoiceData(currentPage);
+      const pageToFetch = isPagination ? page + 1 : 1;
+      const data = await InvoiceData(pageToFetch);
       const invoices = data.invoices || [];
 
       if (invoices.length === 0) {
         setHasMore(false);
-        setLoadingMore(false);
-        setLoading(false);
-        setRefreshing(false);
         return;
       }
 
-      const uniqueInvoices = invoices.filter(invoice => {
-        const stringId = invoice.id.toString();
-        if (seenIds.has(stringId)) {
-          return false;
-        }
-        seenIds.add(stringId);
-        return true;
+      const newInvoices = invoices.filter(invoice => {
+        const id = invoice.id.toString();
+        const isDuplicate = seenIds.has(id);
+        if (!isDuplicate) seenIds.add(id);
+        return !isDuplicate;
       });
 
-      if (uniqueInvoices.length === 0) {
+      if (newInvoices.length === 0) {
         setHasMore(false);
-      } else {
-        setInvoiceData(prevData =>
-          isPagination ? [...prevData, ...uniqueInvoices] : uniqueInvoices,
-        );
-        setPage(currentPage);
+        return;
       }
+
+      setInvoiceData(prevData =>
+        isPagination ? [...prevData, ...newInvoices] : newInvoices,
+      );
+
+      setPage(pageToFetch);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading invoice data:', error);
+
+      if (retry < MAX_RETRIES) {
+        setRetryCount(retry + 1);
+        setTimeout(() => {
+          loadData(isPagination, retry + 1);
+        }, 1000 * Math.pow(2, retry));
+        return;
+      }
+
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load invoices after multiple attempts.',
+      });
+      setHasMore(false);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -145,9 +158,10 @@ const InvoiceScreen: React.FC = () => {
 
   const handleRefreshPress = useCallback(() => {
     setRefreshing(true);
-    navigation.setParams({ results: undefined });
+    navigation.setParams({results: undefined});
+    setIsFiltered(false);
     loadData(false);
-  }, [loadData, navigation]);
+  }, [navigation]);
 
   const handleSearchPress = useCallback(() => {
     const pushAction = StackActions.push('SearchScreen', {
@@ -161,14 +175,23 @@ const InvoiceScreen: React.FC = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   }, [navigation]);
 
+  const debouncedLoadMore = useCallback(
+    debounce(() => {
+      if (!isFiltered && !loadingMore && hasMore) {
+        checkInternetAndFetchData(true);
+      }
+    }, 300),
+    [isFiltered, loadingMore, hasMore, checkInternetAndFetchData],
+  );
+
   const renderItem = useCallback(
-    ({ item }: { item: InvoiceItemResponce }) => (
-      <View style={{ marginVertical: 10, marginHorizontal: 15 }}>
+    ({item}: {item: InvoiceItemResponce}) => (
+      <View style={{marginVertical: 10, marginHorizontal: 15}}>
         <InvoiceComponent
           data={item}
           onInvoiceChange={() => {
             setRefreshing(true);
-            loadData();
+            loadData(false);
           }}
         />
       </View>
@@ -205,19 +228,17 @@ const InvoiceScreen: React.FC = () => {
               onRefresh={handleRefreshPress}
             />
           }
-          onEndReached={() => {
-            if (!loadingMore && hasMore) {
-              checkInternetAndFetchData(true);
-            }
-          }}
-          onEndReachedThreshold={0.5}
+          onEndReached={debouncedLoadMore}
+          onEndReachedThreshold={0.3}
           contentContainerStyle={styles.listContent}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.footer}>
+                <ActivityIndicator size="large" color="#ffffff" />
+              </View>
+            ) : null
+          }
         />
-        {loadingMore && (
-          <View style={styles.footer}>
-            <ActivityIndicator size="large" color="#ffffff" />
-          </View>
-        )}
       </>
     );
   }, [
@@ -228,13 +249,13 @@ const InvoiceScreen: React.FC = () => {
     hasMore,
     handleRefreshPress,
     renderItem,
+    debouncedLoadMore,
   ]);
 
   return (
     <ImageBackground
       source={require('../assest/icons/SideBarBg.jpg')}
-      style={styles.background}
-    >
+      style={styles.background}>
       <View style={styles.container}>
         <TopBar
           title="Invoices"

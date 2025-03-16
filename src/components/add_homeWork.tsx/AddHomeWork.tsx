@@ -252,11 +252,11 @@ const AddHomeWork = () => {
               setSelectedSection(''); // Reset selected section
             }}
             style={styles.picker}>
-            <Picker.Item label="Select Year" />
+            <Picker.Item label="Select Year" color="black" />
             {data &&
               Object.entries(data.classes).map(([key, value]) => (
                 <Picker.Item
-                  color="black"
+                  color="white"
                   key={key}
                   label={value}
                   value={key}
@@ -271,10 +271,10 @@ const AddHomeWork = () => {
               selectedValue={selectedSection}
               onValueChange={itemValue => setSelectedSection(itemValue)}
               style={styles.picker}>
-              <Picker.Item label="Select Class" />
+              <Picker.Item label="Select Class" color="black" />
               {filteredSections.map(section => (
                 <Picker.Item
-                  color="black"
+                  color="white"
                   key={section.id}
                   label={section.sectionName}
                   value={section.id}
@@ -289,9 +289,10 @@ const AddHomeWork = () => {
             selectedValue={subject}
             onValueChange={itemValue => setSubject(itemValue)}
             style={styles.picker}>
-            <Picker.Item label="Select Subject" />
+            <Picker.Item label="Select Subject" color="black" />
             {subjectData?.map((sub: any, index: number) => (
               <Picker.Item
+                color="white"
                 label={sub.subjectTitle}
                 value={sub.id}
                 key={index}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   StyleSheet,
@@ -9,13 +9,13 @@ import {
   Text,
 } from 'react-native';
 import TopBarCalender from '../components/TopBarCalender';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import {useNavigation, DrawerActions} from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { CalendarNewData } from '../config/axios';
+import {CalendarNewData} from '../config/axios';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CalendarEvent, MainStackParamList } from '../types';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {CalendarEvent, MainStackParamList} from '../types';
 
 type studentNavigationProp = NativeStackNavigationProp<
   MainStackParamList,
@@ -33,30 +33,40 @@ export const fetchCalendarEvents = async (startDate: Date, endDate: Date) => {
   }
 };
 
-export const generateDateCards = (startDate: Date, endDate: Date, eventData: any) => {
+export const generateDateCards = (
+  startDate: Date,
+  endDate: Date,
+  eventData: any,
+) => {
   const cards = [];
   const currentDate = new Date(startDate);
 
   while (currentDate <= endDate) {
-    const dateStr = currentDate.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).replace(/\//g, '-');
+    const dateStr = currentDate
+      .toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+      .replace(/\//g, '-');
 
-    const isToday = new Date().toISOString().split('T')[0] === currentDate.toISOString().split('T')[0];
+    const isToday =
+      new Date().toISOString().split('T')[0] ===
+      currentDate.toISOString().split('T')[0];
     const dayData = eventData.find((item: any) => item.date === dateStr);
 
     const dayEvents = {
       id: dateStr,
       date: new Date(currentDate),
       isToday,
-      label: isToday ? 'Today' : currentDate.toLocaleDateString('en-US', {weekday: 'long'}),
+      label: isToday
+        ? 'Today'
+        : currentDate.toLocaleDateString('en-US', {weekday: 'long'}),
       events: [
         ...(dayData?.newsEvents || []),
         ...(dayData?.assignments || []),
-        ...(dayData?.homeworks || [])
-      ]
+        ...(dayData?.homeworks || []),
+      ],
     };
 
     cards.push(dayEvents);
@@ -115,7 +125,7 @@ const CalenderScreen: React.FC = () => {
       const processedData = await fetchCalendarEvents(startDate, endDate);
 
       setCalendarEvents(prevEvents =>
-        isLoadingMore ? [...prevEvents, ...processedData] : processedData
+        isLoadingMore ? [...prevEvents, ...processedData] : processedData,
       );
 
       setLoading(false);
@@ -127,7 +137,7 @@ const CalenderScreen: React.FC = () => {
     }
   };
 
-  const renderEventCard = ({ item }: { item: any }) => (
+  const renderEventCard = ({item}: {item: any}) => (
     <View style={styles.cardContainer}>
       <Text style={styles.dateLabel}>{item.label}</Text>
       <Text style={styles.dateText}>
@@ -169,7 +179,7 @@ const CalenderScreen: React.FC = () => {
   const onEndReached = () => {
     if (!isLoadingMore) {
       setIsLoadingMore(true);
-      const nextMonth = new Date(currentMonth); 
+      const nextMonth = new Date(currentMonth);
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       setCurrentMonth(nextMonth);
     }

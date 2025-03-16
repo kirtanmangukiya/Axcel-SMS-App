@@ -69,12 +69,13 @@ const CredentialsNotesScreen: React.FC = () => {
   };
 
   const handleRefreshPress = useCallback(() => {
-    setShowFullData(true); // Force display of fullData on refresh
+    if (route.params?.results) {
+      navigation.setParams({results: undefined});
+    }
+
     setRefreshing(true);
-    setData(fullData); // Display full data after refresh
-    loadData(); // Reload full data
-  }, [fullData]);
-  
+    loadData();
+  }, [navigation, route.params]);
 
   const handleMenuPress = useCallback(() => {
     navigation.dispatch(DrawerActions.openDrawer());
@@ -153,7 +154,10 @@ const CredentialsNotesScreen: React.FC = () => {
         const lastRefreshTime = Date.now();
         const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-        if (lastRefreshTime - (global.lastRefreshTime || 0) > REFRESH_THRESHOLD) {
+        if (
+          lastRefreshTime - (global.lastRefreshTime || 0) >
+          REFRESH_THRESHOLD
+        ) {
           loadData();
           global.lastRefreshTime = lastRefreshTime;
         }

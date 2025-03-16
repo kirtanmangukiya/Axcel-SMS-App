@@ -111,7 +111,9 @@ const YearlyComponent: React.FC<YearData> = ({data}) => {
           marginLeft: '5%',
           flexDirection: 'row',
         }}>
-        <Text style={{fontWeight: 'bold', fontSize: 20}}>{data.className}</Text>
+        <Text style={{fontWeight: 'bold', fontSize: 20, color: 'black'}}>
+          {data.className}
+        </Text>
       </View>
 
       {/* Second View */}

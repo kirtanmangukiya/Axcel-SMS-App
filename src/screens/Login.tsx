@@ -1,11 +1,9 @@
 import {
   Dimensions,
-  FlatList,
   Image,
   ImageBackground,
   KeyboardAvoidingView,
   Linking,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -35,19 +33,12 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Login'
 >;
 
-interface Account {
-  username: string;
-  password: string;
-}
-
 const LoginScreen: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [fcmToken, setFcmToken] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [storedAccounts, setStoredAccounts] = useState<Account[]>([]);
 
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
@@ -61,9 +52,6 @@ const LoginScreen: React.FC = () => {
         const token = await messaging().getToken();
         console.log('FCM Device Token:', token);
         setFcmToken(token);
-        // const response = await deviceToken({deviceToken: token});
-        // setFcmToken(response);
-        // console.log('Device token update response:', response);
       } catch (error) {
         console.error('Failed to get FCM token:', error);
       }
@@ -72,17 +60,10 @@ const LoginScreen: React.FC = () => {
     getDeviceToken();
   }, []);
 
-  // console.log('check the token ----------------', fcmToken);
-
   useEffect(() => {
     requestUserPermission();
-
-    loadStoredAccounts();
-
-    // return messaging().onTokenRefresh(token => {
-    //   setFcmToken(token);
-    // });
   }, []);
+
   const openPrivacyPolicy = () => {
     Linking.openURL('https://axcel.schoolmgmtsys.com/policyAxcel.html');
   };
@@ -98,35 +79,6 @@ const LoginScreen: React.FC = () => {
     }
   };
 
-  const loadStoredAccounts = async () => {
-    const storedData = await AsyncStorage.getItem('loginAccounts');
-    if (storedData) {
-      setStoredAccounts(JSON.parse(storedData));
-      // Show the modal only if there are stored accounts
-      if (JSON.parse(storedData).length > 0) {
-        setShowModal(true);
-      }
-    }
-  };
-
-  const saveAccount = async (account: Account) => {
-    let accounts = storedAccounts;
-
-    // Remove duplicate entries
-    accounts = accounts.filter(acc => acc.username !== account.username);
-
-    // Add the new account at the start
-    accounts.unshift(account);
-
-    // Keep only the last 3 accounts
-    if (accounts.length > 3) {
-      accounts = accounts.slice(0, 3);
-    }
-
-    setStoredAccounts(accounts);
-    await AsyncStorage.setItem('loginAccounts', JSON.stringify(accounts));
-  };
-
   const handleLoginPress = async () => {
     setLoading(true);
 
@@ -137,7 +89,7 @@ const LoginScreen: React.FC = () => {
         fcmToken,
       );
 
-      //set the token1 and level values
+      // Set the token1 and level values
       const randomNum =
         Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
       const token = `XYZGHIJKJHHHHH${randomNum}XYZGHIJKJHHHHH`;
@@ -151,8 +103,8 @@ const LoginScreen: React.FC = () => {
       }
       await AsyncStorage.setItem('lev', userLevel);
 
+      // Store login data for use in other screens
       await AsyncStorage.setItem('loginData', JSON.stringify(response));
-      saveAccount({username, password});
 
       Toast.show({
         type: 'success',
@@ -184,12 +136,6 @@ const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleAccountSelect = (account: Account) => {
-    setUsername(account.username);
-    setPassword(account.password);
-    setShowModal(false);
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -219,7 +165,6 @@ const LoginScreen: React.FC = () => {
                 autoCapitalize="none"
                 placeholder="Username / Admission No"
                 placeholderTextColor="white"
-                onFocus={() => setShowModal(true)}
                 onChangeText={setUsername}
                 value={username}
               />
@@ -264,38 +209,6 @@ const LoginScreen: React.FC = () => {
           </TouchableOpacity>
         </ImageBackground>
       </ScrollView>
-
-      {/* Show modal only if there are stored accounts */}
-      {storedAccounts.length > 0 && (
-        <Modal
-          visible={showModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowModal(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <FlatList
-                data={storedAccounts}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({item}) => (
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={() => handleAccountSelect(item)}>
-                    <Image
-                      source={require('../assest/icons/transparentlogo-removebg-preview.png')}
-                      style={styles.dropdownIcon}
-                    />
-                    <View style={styles.dropdownTextContainer}>
-                      <Text style={styles.dropdownText}>{item.username}</Text>
-                      <Text style={styles.dropdownText}>••••••••</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
     </KeyboardAvoidingView>
   );
 };
@@ -358,34 +271,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     color: 'white',
   },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderBottomColor: '#ddd',
-    borderBottomWidth: 1,
-  },
-  dropdownIcon: {
-    width: 30,
-    height: 30,
-    marginRight: 10,
-  },
-  dropdownTextContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dropdownText: {
-    color: 'black',
-    fontSize: 16,
-  },
   button: {
     width: '100%',
     maxWidth: 400,
     padding: 9,
     backgroundColor: '#2d7ca3',
-    // borderRadius: 10,
     marginTop: '5%',
     alignItems: 'center',
   },
@@ -399,20 +289,6 @@ const styles = StyleSheet.create({
   footerText: {
     color: 'white',
     fontSize: 14,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    width: '80%',
-    maxWidth: 400,
-    maxHeight: 300,
-    padding: 20,
   },
 });
 

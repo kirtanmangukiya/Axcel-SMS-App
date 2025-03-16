@@ -1,15 +1,25 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
+  Text,
   FlatList,
   StyleSheet,
   ImageBackground,
   RefreshControl,
   AppState,
+  TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
-import {useNavigation, DrawerActions, StackActions, useRoute, RouteProp} from '@react-navigation/native';
+import {
+  useNavigation,
+  DrawerActions,
+  StackActions,
+  useRoute,
+  RouteProp,
+} from '@react-navigation/native';
 import NoDataFound from '../../components/no_data_found/NoDataFound';
-import YearlyComponent from '../../components/yearly_component/yearly_component';
 import TopBar from '../../components/TopBar';
 import {classData} from '../../config/axios';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -27,6 +37,69 @@ type YearScreenNavigationProp = NativeStackNavigationProp<
   'ClassScreen'
 >;
 type YearScreenResultRouteProp = RouteProp<MainStackParamList, 'ClassScreen'>;
+
+// Enable LayoutAnimation for Android
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// Card component for class details
+const ClassDetailCard = ({teacher, subject}) => {
+  return (
+    <View style={styles.detailCard}>
+      <Text style={styles.detailText}>Teacher ID: {teacher}</Text>
+      {subject && <Text style={styles.detailText}>Subject: {subject}</Text>}
+    </View>
+  );
+};
+
+// Expandable class card component
+const ClassCard = ({item}) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggleExpand = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
+  };
+
+  return (
+    <View style={styles.cardContainer}>
+      <TouchableOpacity onPress={toggleExpand} style={styles.classCard}>
+        <Text style={styles.className}>Class {item.className}</Text>
+        <Text style={styles.expandIcon}>{expanded ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {expanded && (
+        <View style={styles.detailsContainer}>
+          {item.classTeacher && item.classTeacher.length > 0 ? (
+            item.classTeacher.map((teacher, index) => (
+              <ClassDetailCard
+                key={`${item.id}-teacher-${index}`}
+                teacher={teacher}
+                subject={item.classSubjects && item.classSubjects[index]}
+              />
+            ))
+          ) : (
+            <Text style={styles.noDetailsText}>
+              No teacher details available
+            </Text>
+          )}
+
+          {item.dormitoryName && (
+            <View style={styles.detailCard}>
+              <Text style={styles.detailText}>
+                Dormitory: {item.dormitoryName}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
 
 const ClassScreen: React.FC = () => {
   const navigation = useNavigation<YearScreenNavigationProp>();
@@ -47,9 +120,7 @@ const ClassScreen: React.FC = () => {
   }, [navigation]);
 
   const renderItem = ({item}: {item: ClassAssignment}) => (
-    <View style={{marginVertical: 10, marginHorizontal: 15}}>
-      <YearlyComponent data={item} />
-    </View>
+    <ClassCard item={item} />
   );
 
   const handleSearchPress = useCallback(() => {
@@ -90,7 +161,7 @@ const ClassScreen: React.FC = () => {
   useEffect(() => {
     checkInternetAndLoadData(); // Initial data load
 
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
       if (appState.match(/inactive|background/) && nextAppState === 'active') {
         checkInternetAndLoadData();
       }
@@ -155,9 +226,7 @@ const ClassScreen: React.FC = () => {
           onRefreshPress={handleRefreshPress}
           onMenuPress={handleMenuPress}
         />
-        <View style={styles.content}>
-          {renderContent()}
-        </View>
+        <View style={styles.content}>{renderContent()}</View>
       </View>
     </ImageBackground>
   );
@@ -177,12 +246,64 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingVertical: 10,
+    paddingHorizontal: 15,
     marginVertical: 20,
   },
   activityIndicatorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cardContainer: {
+    marginVertical: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  classCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#0074A6',
+  },
+  className: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  expandIcon: {
+    fontSize: 16,
+    color: 'white',
+  },
+  detailsContainer: {
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+  },
+  detailCard: {
+    backgroundColor: 'white',
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0074A6',
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 4,
+  },
+  noDetailsText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 10,
   },
 });
 
