@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   ImageBackground,
@@ -17,7 +18,7 @@ import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
 } from '@react-navigation/drawer';
-import React, {ComponentType, FC} from 'react';
+import React, {ComponentType, FC, useEffect, useState} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
 
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -154,12 +155,30 @@ const SideBarAdmin: FC<SideBarProps> = props => {
     Fontisto: Fontisto as ComponentType<IconProps>,
   };
 
-  const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData?.user?.photo}`;
-  console.log('check the image ', userData.user.photo);
-  // const imageUrl = 'https://axcel.schoolmgmtsys.com/dashboard/profileImage/1';
-  const ExternalUrlScreen = () => (
-    <WebView source={{ uri: 'https://axcellibrary.schoolmgmtsys.com' }} />
-  );
+  // const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData?.user?.photo}`;
+  // console.log('check the image ', userData.user.photo);
+  // // const imageUrl = 'https://axcel.schoolmgmtsys.com/dashboard/profileImage/1';
+  // const ExternalUrlScreen = () => (
+  //   <WebView source={{ uri: 'https://axcellibrary.schoolmgmtsys.com' }} />
+  // );
+
+  console.log('User Id: ', userData.user.id);
+
+  const [imageLoading, setImageLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${userData.user.id}?timestamp=${reloadKey}`;
+
+  const handleReload = () => {
+    setReloadKey(Date.now());
+    setImageLoading(true);
+  };
+
+  useEffect(() => {
+    if (isFocused) {
+      handleReload();
+    }
+  }, []);
 
   return (
     <ImageBackground
@@ -167,11 +186,40 @@ const SideBarAdmin: FC<SideBarProps> = props => {
       style={{flex: 1}}>
       <Container>
         <FixedContainer>
-          <AvatarContainer>
-            <Avatar
-              source={{uri: imageUrl}}
-            />
-          </AvatarContainer>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <AvatarContainer>
+              {imageLoading && (
+                <ActivityIndicator
+                  size="small"
+                  color="#333"
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    zIndex: 1,
+                    transform: [{translateX: -10}, {translateY: -10}],
+                  }}
+                />
+              )}
+              <Avatar
+                key={reloadKey}
+                source={{
+                  uri: imageUrl,
+                  cache: 'reload',
+                  headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    Pragma: 'no-cache',
+                    Expires: '0',
+                  },
+                }}
+                onLoadStart={() => setImageLoading(true)}
+                onLoadEnd={() => setImageLoading(false)}
+              />
+            </AvatarContainer>
+            <TouchableOpacity onPress={handleReload} style={{marginLeft: 10}}>
+              <MaterialIcons name="refresh" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
           <UserInfo>
             <UserNameContainer>
               <UserName>{userData.user.fullName}</UserName>
@@ -409,36 +457,38 @@ const SideBarAdmin: FC<SideBarProps> = props => {
             <MenuText style={styles.menuItemText}>Books Library</MenuText>
           </MenuItem2>
           <MenuItem2
-  style={styles.menuItem}
-  onPress={async () => {
-    try {
-      const token1 = await AsyncStorage.getItem('token1');
-      const sessionUrl = `https://axcellibrary.schoolmgmtsys.com/`;
+            style={styles.menuItem}
+            onPress={async () => {
+              try {
+                const token1 = await AsyncStorage.getItem('token1');
+                const sessionUrl = `https://axcellibrary.schoolmgmtsys.com/`;
 
-      console.log('Navigating to WebViewComponent with URL:', sessionUrl);
-      
-      // Correct navigation call
-      navigation.navigate('WebViewComponent', { url: sessionUrl });
-      
-      // Optional debug statement or function call
-      refreshRender(
-        'Navigating to external website inside the app',
-        'WebViewScreen'
-      );
-    } catch (error) {
-      console.error('Error navigating to WebView:', error);
-      Alert.alert(
-        'Error',
-        'Unable to open eLibrary. Please try again.'
-      );
-    }
-  }}
->
-  <View style={{ width: '20%' }}>
-    <FontAwesome name="link" size={30} color="#ffffff" />
-  </View>
-  <MenuText style={styles.menuItemText}>eLibrary</MenuText>
-</MenuItem2>
+                console.log(
+                  'Navigating to WebViewComponent with URL:',
+                  sessionUrl,
+                );
+
+                // Correct navigation call
+                navigation.navigate('WebViewComponent', {url: sessionUrl});
+
+                // Optional debug statement or function call
+                refreshRender(
+                  'Navigating to external website inside the app',
+                  'WebViewScreen',
+                );
+              } catch (error) {
+                console.error('Error navigating to WebView:', error);
+                Alert.alert(
+                  'Error',
+                  'Unable to open eLibrary. Please try again.',
+                );
+              }
+            }}>
+            <View style={{width: '20%'}}>
+              <FontAwesome name="link" size={30} color="#ffffff" />
+            </View>
+            <MenuText style={styles.menuItemText}>eLibrary</MenuText>
+          </MenuItem2>
 
           <MenuItem2
             style={styles.menuItem}

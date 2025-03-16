@@ -9,6 +9,7 @@ import {
 } from '@react-navigation/native';
 import MessageScreen from '../../screens/message_screens/MessageScreen';
 import ChatScreen from '../../screens/message_screens/ChatScreen';
+import AddChatScreen from '../../screens/message_screens/AddChatScreen';
 
 const Stack = createStackNavigator();
 
@@ -37,6 +38,11 @@ const RouteMessage = () => {
       <Stack.Screen
         name="SearchScreen"
         component={SearchScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AddChatScreen"
+        component={AddChatScreen}
         options={{headerShown: false}}
       />
       <Stack.Screen

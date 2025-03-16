@@ -2369,6 +2369,75 @@ export async function AttendenceListData(id: number): Promise<atttendenceList> {
     }
   }
 }
+
+export async function searchUsersForChat(keyword: string): Promise<any[]> {
+  console.log('Searching for users with keyword:', keyword);
+
+  try {
+    // Initialize AUTH_TOKEN if it's not available
+    if (!AUTH_TOKEN) {
+      await initializeAuthToken();
+    }
+
+    if (!AUTH_TOKEN) {
+      throw new Error('AUTH_TOKEN is not available');
+    }
+
+    // Make the API request
+    const response = await fetch(
+      `${BASE_URL}/messages/searchUser/${encodeURIComponent(keyword)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+        },
+      },
+    );
+
+    // Check if response is not OK
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Network response was not ok: ${errorText}`);
+    }
+
+    // Read response text
+    const text = await response.text();
+    console.log('API Response:', text); // Log the raw response
+
+    // Parse and return JSON data if available
+    if (text.trim() !== '') {
+      try {
+        const data = JSON.parse(text);
+
+        // Transform the object with IDs as keys into an array of user objects
+        if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+          const usersArray = Object.keys(data).map(key => ({
+            id: data[key].id,
+            fullName: data[key].name,
+            email: data[key].email || '',
+            role: data[key].role || '',
+            username: data[key].username || '',
+            photo: data[key].photo || '',
+          }));
+          console.log('Transformed users array:', usersArray);
+          return usersArray;
+        }
+
+        return data; // Return the parsed data if it's already an array
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError, 'Response text:', text);
+        throw new Error('JSON parse error');
+      }
+    } else {
+      return []; // Return empty array for no results
+    }
+  } catch (error) {
+    console.error('Error searching for users:', error);
+    throw error;
+  }
+}
+
 export async function AssignUploadListData(
   id: number,
 ): Promise<atttendenceList> {
@@ -2480,30 +2549,33 @@ export async function newMessageCreateAddData(
   }
 }
 
-export async function listBeforeMessages(
-  userId: number,
-  id: number,
-  timestamp: number,
-): Promise<any> {
-  console.log('-----------------------------------');
-  console.log('Function parameters:', {userId, id, timestamp});
+interface Message {
+  _id: number | string;
+  text: string;
+  createdAt: Date;
+  user: {
+    _id: number | string;
+    name?: string;
+    avatar?: string;
+  };
+  dateSentH?: string;
+}
 
+export async function listBeforeMessages(
+  fromId: number,
+  toId: number,
+): Promise<Message[]> {
   try {
-    // Ensure the AUTH_TOKEN is available
     if (!AUTH_TOKEN) {
-      console.log('AUTH_TOKEN is not available, initializing...');
       await initializeAuthToken();
     }
 
     if (!AUTH_TOKEN) {
-      throw new Error('AUTH_TOKEN is still not available after initialization');
+      throw new Error('AUTH_TOKEN is not available');
     }
 
-    // Construct the URL
-    const url = `${BASE_URL}/messages/getchat/${userId}/${id}`;
-    console.log('Requesting URL:', url);
+    const url = `${BASE_URL}messages/ajax/${fromId}/${toId}/0`;
 
-    // Make the API request
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -2512,41 +2584,28 @@ export async function listBeforeMessages(
       },
     });
 
-    // Log the response status and headers
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
-
-    // Check for non-OK responses early
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Network response was not ok: ${errorText}`);
       throw new Error(`Network response was not ok: ${response.status}`);
     }
 
-    // Get and parse the response text
-    const text = await response.text();
+    const messages = await response.json();
 
-    // Check if the response is empty
-    if (!text || text.trim() === '') {
-      console.error('Empty response received');
-      throw new Error('Empty response received');
-    }
-
-    // Attempt to parse the JSON response
-    try {
-      const data = JSON.parse(text);
-      // console.log('Parsed response data:', data);
-      return data;
-    } catch (jsonError) {
-      console.error('JSON parse error:', jsonError);
-      throw new Error('JSON parse error');
-    }
+    return messages.map(msg => ({
+      _id: msg.id,
+      text: msg.messageText,
+      createdAt: new Date(parseInt(msg.dateSent) * 1000),
+      user: {
+        _id: msg.fromId,
+        name: msg.fullName,
+        avatar: msg.photo
+          ? `${BASE_URL}dashboard/profileImage/${msg.photo}`
+          : undefined,
+      },
+      dateSentH: msg.dateSentH,
+    }));
   } catch (error) {
-    console.error(
-      'Fetch user data failed:',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-    throw error; // Re-throw the error to allow it to be caught further up the call stack
+    console.error('Error fetching messages:', error);
+    throw error;
   }
 }
 export async function resourceAndGuideData(): Promise<resourceAndGuideApiResponce> {

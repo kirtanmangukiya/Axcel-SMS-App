@@ -4,7 +4,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 export type MainStackParamList = {
   NewsSelectedScreen: undefined;
   AddAssignmentScreen: undefined;
-
+  AddChatScreen: undefined;
   SearchResultsScreen: {results: any[]};
   ResourceAndGuide: undefined;
   BooksLibraryResult: {results: any[]};
@@ -138,6 +138,15 @@ export interface LoginCredentials {
 export interface LoginResponse {
   token: string;
   user: User;
+}
+
+export interface UserSearchResult {
+  id: number | string;
+  fullName: string;
+  photo?: string;
+  email?: string;
+  role?: string;
+  username?: string;
 }
 
 export interface insideNewsBoard {

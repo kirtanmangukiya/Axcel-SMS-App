@@ -15,24 +15,26 @@ import {
   Send,
   InputToolbarProps,
   SendProps,
+  Day,
 } from 'react-native-gifted-chat';
 import styled from 'styled-components/native';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {ChatItem, RootStackParamList} from '../../types';
+import {RootStackParamList} from '../../types';
 import {listBeforeMessages, newMessageCreateAddData} from '../../config/axios';
 import {useNavigation} from '@react-navigation/native';
-import back from 'react-native-vector-icons/AntDesign';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-interface User {
-  _id: string | number;
-  name?: string;
-  avatar?: string | number | (() => JSX.Element);
-}
-
-interface Message extends IMessage {
-  user: User;
+interface Message {
+  _id: number | string;
+  text: string;
+  createdAt: Date;
+  user: {
+    _id: number | string;
+    name?: string;
+    avatar?: string;
+  };
+  dateSentH?: string;
 }
 
 type ChatScreenRouteProp = RouteProp<RootStackParamList, 'ChatScreen'>;
@@ -53,18 +55,20 @@ const HeaderText = styled.Text`
 
 const Container = styled.View`
   flex: 1;
-  background-color: ${props => props.theme.mode === 'dark' ? '#121212' : '#f5f5f5'};
+  background-color: ${props =>
+    props.theme.mode === 'dark' ? '#121212' : '#f5f5f5'};
 `;
 
-const BackButton = styled.TouchableOpacity`
-  padding: 8px;
-`;
+// Key for storing last read messages in AsyncStorage
+const LAST_READ_MESSAGES_KEY = 'last_read_messages';
 
-const BackIcon = styled.Image`
-  width: 24px;
-  height: 24px;
-  tintcolor: #ffffff;
-`;
+// Interface for storing last read message data
+interface LastReadMessage {
+  messageId: string | number;
+  messageText: string;
+  timestamp: number;
+  sentByMe: boolean; // Add this field to track if the current user sent the message
+}
 
 export function ChatScreen() {
   const colorScheme = useColorScheme();
@@ -75,8 +79,56 @@ export function ChatScreen() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [userId, setUserId] = useState<string | number | null>(null);
-  console.log('check the route ', data);
   const navigation = useNavigation();
+
+  // Update the last read message in AsyncStorage
+
+  const updateLastReadMessage = async (
+    messageText: string,
+    sentByMe: boolean = false,
+  ) => {
+    try {
+      if (!data?.userId) return;
+
+      const userId = data.userId.toString();
+
+      // Get current stored messages
+      const storedMessages = await AsyncStorage.getItem(LAST_READ_MESSAGES_KEY);
+      let lastReadMessages = storedMessages ? JSON.parse(storedMessages) : {};
+
+      // Update the record for this user
+      lastReadMessages[userId] = {
+        messageId: Date.now(),
+        messageText: messageText,
+        timestamp: Date.now(),
+        sentByMe: sentByMe, // Store whether the current user sent this message
+      };
+
+      // Save back to AsyncStorage
+      await AsyncStorage.setItem(
+        LAST_READ_MESSAGES_KEY,
+        JSON.stringify(lastReadMessages),
+      );
+    } catch (error) {
+      console.error('Failed to update last read message:', error);
+    }
+  };
+
+  // When component mounts, mark the conversation as read
+  useEffect(() => {
+    const markConversationAsRead = async () => {
+      try {
+        if (data?.lastMessage) {
+          // We don't know who sent the last message here, so we'll use false as default
+          await updateLastReadMessage(data.lastMessage, false);
+        }
+      } catch (error) {
+        console.error('Failed to mark conversation as read:', error);
+      }
+    };
+
+    markConversationAsRead();
+  }, [data]);
 
   const loadData = async () => {
     try {
@@ -85,31 +137,26 @@ export function ChatScreen() {
         const userData = JSON.parse(userDataString);
         setUserId(userData.user.id);
 
-        const previousMessages = await listBeforeMessages(
-          userData.user.id,
-          data?.userId,
-          data.lastMessageTimestamp,
-        );
+        // Check if we have a valid userId from the data
+        if (data?.userId) {
+          const messages = await listBeforeMessages(
+            userData.user.id,
+            data.userId,
+          );
 
-        if (previousMessages) {
-          const formattedMessages = previousMessages.map(msg => ({
-            _id: msg.id,
-            text: msg.messageText,
-            createdAt: msg.dateSent
-              ? new Date(msg.dateSent * 1000)
-              : new Date(),
-            user: {
-              _id: msg.fromId,
-              name: msg.fullName,
-              avatar: msg.photo ? `path_to_images/${msg.photo}` : undefined,
-            },
-            dateSentH: msg.dateSentH,
-          }));
-          setMessages(formattedMessages);
+          setMessages(messages);
+
+          // If there are messages, mark the latest one as read
+          if (messages.length > 0) {
+            await updateLastReadMessage(messages[0].text);
+          }
+        } else {
+          // If no userId is provided, set empty messages
+          setMessages([]);
         }
       }
     } catch (error) {
-      console.log(error);
+      console.log('Error loading chat data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -126,38 +173,29 @@ export function ChatScreen() {
 
   const sendMessage = async (newMessages: IMessage[] = []) => {
     if (newMessages.length > 0) {
-      const userDataString = await AsyncStorage.getItem('loginData');
-      if (userDataString) {
-        const userData = JSON.parse(userDataString);
-        const currentUserId = userData.user.id;
+      try {
+        const messageText = newMessages[0].text;
+        const requestBody = {
+          recipients: [{id: data?.userId}],
+          message: messageText,
+        };
 
-        const newMessage = newMessages[0];
-        try {
-          await newMessageCreateAddData(
-            [{id: currentUserId}, {id: data?.userId}],
-            newMessage.text,
-          );
+        console.log('Message Request Body:', requestBody);
 
-          const formattedMessages: Message[] = newMessages.map(msg => ({
-            ...msg,
-            _id: msg._id || new Date().getTime(),
-            createdAt: new Date(),
-            user: {
-              ...msg.user,
-              _id: currentUserId,
-              avatar:
-                typeof msg.user.avatar === 'string'
-                  ? msg.user.avatar
-                  : undefined,
-            },
-          }));
+        await newMessageCreateAddData([{id: data?.userId}], messageText);
 
-          setMessages(previousMessages =>
-            GiftedChat.append(previousMessages, formattedMessages),
-          );
-        } catch (error) {
-          console.error('Failed to send message:', error);
-        }
+        setMessages(previousMessages =>
+          GiftedChat.append(previousMessages, newMessages),
+        );
+
+        // Update the last read message when sending a new message
+
+        // Mark it as sent by the current user (true)
+        await updateLastReadMessage(messageText, true);
+
+        loadData();
+      } catch (error) {
+        console.error('Failed to send message:', error);
       }
     }
   };
@@ -199,6 +237,18 @@ export function ChatScreen() {
     );
   }
 
+  console.log('Data:', data);
+  const renderDay = props => {
+    return (
+      <Day
+        {...props}
+        textStyle={{
+          color: '#000000',
+          fontWeight: '600',
+        }}
+      />
+    );
+  };
   return (
     <Container>
       <Header>
@@ -213,7 +263,13 @@ export function ChatScreen() {
           </View>
         </TouchableOpacity>
         <Image
-          source={require('../../assest/icons/download.jpg')}
+          source={
+            data?.photo
+              ? {
+                  uri: `https://sms.psleprimary.com/uploads/profile/${data.photo}`,
+                }
+              : require('../../assest/icons/download.jpg')
+          }
           style={styles.avatar}
         />
         <HeaderText>{data?.fullName}</HeaderText>
@@ -225,6 +281,7 @@ export function ChatScreen() {
         renderInputToolbar={renderInputToolbar}
         renderSend={renderSend}
         onRefresh={onRefresh}
+        renderDay={renderDay}
         isLoadingEarlier={refreshing}
         textStyle={{color: isDarkMode ? '#ffffff' : '#000000'}}
         timeTextStyle={{color: isDarkMode ? '#cccccc' : '#666666'}}
