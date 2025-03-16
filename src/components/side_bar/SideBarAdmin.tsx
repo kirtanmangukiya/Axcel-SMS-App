@@ -577,6 +577,20 @@ const SideBarAdmin: FC<SideBarProps> = props => {
             </View>
             <MenuText style={styles.menuItemText}>Subjects</MenuText>
           </MenuItem2>
+          <MenuItem2
+            style={styles.menuItem}
+            onPress={() => {
+              navigation.navigate('ResourceAndGuide');
+              refreshRender(
+                'Navigating to ResourceAndGuide',
+                'ResourceAndGuide',
+              );
+            }}>
+            <View style={{width: '20%'}}>
+              <MaterialIcons name="menu-book" size={30} color="#ffffff" />
+            </View>
+            <MenuText style={styles.menuItemText}>Resource & Guide</MenuText>
+          </MenuItem2>
           <MenuItem2 style={styles.menuItem} onPress={() => handleLogout()}>
             <View style={{width: '20%'}}>
               <MaterialIcons name="subject" size={30} color="#ffffff" />

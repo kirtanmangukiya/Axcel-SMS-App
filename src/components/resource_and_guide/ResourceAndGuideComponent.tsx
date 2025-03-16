@@ -12,16 +12,15 @@ import {
 import styled from 'styled-components/native';
 import Icon from 'react-native-vector-icons/Octicons';
 import RNFetchBlob from 'rn-fetch-blob';
-import { bookSlibrarayItem } from '../../types';
-
+import {bookSlibrarayItem} from '../../types';
 
 interface Data {
-  material_file: string
-  material_description: string
-  material_title: string
+  material_file: string;
+  material_description: string;
+  material_title: string;
 }
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 interface NewsBoardProps {
   title: string;
@@ -42,11 +41,11 @@ const HeaderText = styled.Text`
   font-weight: bold;
   color: black;
   margin-bottom: ${screenHeight * 0.005}px;
-  
 `;
 
 const SubHeaderText = styled.Text`
   font-size: ${screenWidth * 0.04}px;
+  color: black;
   margin-bottom: ${screenHeight * 0.025}px;
 `;
 
@@ -73,13 +72,72 @@ const AboveDateText = styled.Text`
 
 const CurrentDateText = styled.Text`
   font-size: ${screenWidth * 0.04}px;
+  color: black;
 `;
 
-interface BooksLibraryDataItem {
-  data: bookSlibrarayItem;
-}
+const DownloadButton = styled.TouchableOpacity`
+  background-color: #c2bdbd;
+  padding: ${screenHeight * 0.01}px;
+  margin-bottom: ${screenHeight * 0.005}px;
+  align-items: center;
+`;
 
-const ResourceAndGuideComponent: React.FC<{ data: Data }> = ({ data }) => {
+const styles = StyleSheet.create({
+  pdfContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: 25,
+  },
+  pdf: {
+    flex: 1,
+    width: screenWidth,
+    height: screenHeight,
+  },
+  closeButton: {
+    backgroundColor: '#c2bdbd',
+    padding: 10,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  downloadText: {
+    color: 'black',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  downloadButton: {
+    height: screenHeight * 0.05,
+    paddingHorizontal: screenWidth * 0.035,
+    backgroundColor: '#2596be',
+    borderRadius: screenWidth * 0.1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  amountContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    backgroundColor: 'red',
+    borderRadius: screenWidth * 0.1,
+    paddingVertical: screenHeight * 0.005,
+    paddingHorizontal: screenWidth * 0.02,
+  },
+  amount: {
+    fontSize: screenWidth * 0.03,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  amountLabel: {
+    fontSize: screenWidth * 0.03,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+});
+
+const ResourceAndGuideComponent: React.FC<{data: Data}> = ({data}) => {
   console.log(data);
 
   const requestExternalStoragePermission = async () => {
@@ -114,8 +172,8 @@ const ResourceAndGuideComponent: React.FC<{ data: Data }> = ({ data }) => {
       return;
     }
 
-    const { config, fs } = RNFetchBlob;
-    const { dirs } = fs;
+    const {config, fs} = RNFetchBlob;
+    const {dirs} = fs;
     const filePath = `${dirs.DownloadDir}/${data.material_file}.pdf`;
 
     config({
@@ -145,7 +203,7 @@ const ResourceAndGuideComponent: React.FC<{ data: Data }> = ({ data }) => {
   return (
     <Container>
       <View style={styles.headerContainer}>
-        <View style={{ width: '75%' }}>
+        <View style={{width: '75%'}}>
           <HeaderText>{data?.material_title}</HeaderText>
           <SubHeaderText>
             {data?.material_description ? data?.material_description : 'N/A'}
@@ -154,22 +212,26 @@ const ResourceAndGuideComponent: React.FC<{ data: Data }> = ({ data }) => {
         {!data.material_file || data?.material_file == '' ? null : (
           <TouchableOpacity style={styles.downloadButton} onPress={downloadPdf}>
             <Icon name="download" size={screenWidth * 0.05} color="white" />
+            <Text style={styles.downloadText}>Download</Text>
           </TouchableOpacity>
         )}
       </View>
       <Row>
-        <ImageView source={require('../../assest/icons/icon_pages_subjects.png')} />
+        <ImageView
+          source={require('../../assest/icons/icon_pages_subjects.png')}
+        />
         <DateView>
           <AboveDateText>Subject</AboveDateText>
           <CurrentDateText>
             {data?.subject ? data?.subject : 'N/A'}
-
           </CurrentDateText>
         </DateView>
       </Row>
-      <View style={{ marginTop: '5%' }}>
+      <View style={{marginTop: '5%'}}>
         <Row>
-          <ImageView source={require('../../assest/icons/icon_pages_class.png')} />
+          <ImageView
+            source={require('../../assest/icons/icon_pages_class.png')}
+          />
           <DateView>
             <AboveDateText>Year</AboveDateText>
             <CurrentDateText>
@@ -181,41 +243,5 @@ const ResourceAndGuideComponent: React.FC<{ data: Data }> = ({ data }) => {
     </Container>
   );
 };
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  downloadButton: {
-    height: screenHeight * 0.05,
-    paddingHorizontal: screenWidth * 0.035,
-    backgroundColor: '#2596be',
-    borderRadius: screenWidth * 0.1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  amountContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    backgroundColor: 'red',
-    borderRadius: screenWidth * 0.1,
-    paddingVertical: screenHeight * 0.005,
-    paddingHorizontal: screenWidth * 0.02,
-  },
-  amount: {
-    fontSize: screenWidth * 0.03,
-    fontWeight: 'bold',
-    color: 'white',
-    marginLeft: screenWidth * 0.01,
-  },
-  amountLabel: {
-    fontSize: screenWidth * 0.03,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-});
 
 export default ResourceAndGuideComponent;
