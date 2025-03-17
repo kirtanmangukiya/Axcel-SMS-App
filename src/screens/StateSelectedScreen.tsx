@@ -1,15 +1,33 @@
 import React, {useState, useEffect} from 'react';
-import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
-import {useNavigation, NavigationProp} from '@react-navigation/native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  AppState,
+} from 'react-native';
+import {
+  useNavigation,
+  NavigationProp,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {RootStackParamList} from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface NotificationData {
-  screen: keyof RootStackParamList;
+  screen: string;
   params?: any;
   timestamp: number;
   read: boolean;
 }
+
+// Map drawer route names to StateSelectedScreen button names
+const routeToScreenMap = {
+  RouteResourceAndGuideScreen: 'ResourceAndGuide',
+  RouteNewsBoardScreen: 'NewsBoard',
+  RouteInvoiceScreen: 'InvoiceScreen',
+};
 
 const StateSelectedScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -22,38 +40,64 @@ const StateSelectedScreen: React.FC = () => {
     NewsBoard: false,
     InvoiceScreen: false,
   });
+  const [appState, setAppState] = useState(AppState.currentState);
 
+  // Load notification status on mount, focus, and app state change
   useEffect(() => {
     loadNotificationStatus();
+
+    // Set up app state listener to refresh when app comes to foreground
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setAppState(nextAppState);
+      if (nextAppState === 'active') {
+        loadNotificationStatus();
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
+
+  // Refresh notification status when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadNotificationStatus();
+    }, []),
+  );
 
   const loadNotificationStatus = async () => {
     try {
       const notificationsJson = await AsyncStorage.getItem('notifications');
       if (notificationsJson) {
         const notifications: NotificationData[] = JSON.parse(notificationsJson);
-        
+
         const lastReadJson = await AsyncStorage.getItem('lastReadTimestamps');
-        const lastRead = lastReadJson ? JSON.parse(lastReadJson) : {
-          ResourceAndGuide: 0,
-          NewsBoard: 0,
-          InvoiceScreen: 0,
-        };
-        
+        const lastRead = lastReadJson
+          ? JSON.parse(lastReadJson)
+          : {
+              ResourceAndGuide: 0,
+              NewsBoard: 0,
+              InvoiceScreen: 0,
+            };
+
         const hasUnread = {
           ResourceAndGuide: false,
           NewsBoard: false,
           InvoiceScreen: false,
         };
-        
+
         notifications.forEach(notification => {
-          if (!notification.read && notification.screen) {
-            if (notification.timestamp > (lastRead[notification.screen] || 0)) {
-              hasUnread[notification.screen] = true;
+          if (!notification.read) {
+            // Map drawer route names to screen names
+            const screenName = mapRouteToScreen(notification.screen);
+
+            if (screenName && hasUnread.hasOwnProperty(screenName)) {
+              if (notification.timestamp > (lastRead[screenName] || 0)) {
+                hasUnread[screenName] = true;
+              }
             }
           }
         });
-        
+
         setUnreadNotifications(hasUnread);
       }
     } catch (error) {
@@ -61,20 +105,9 @@ const StateSelectedScreen: React.FC = () => {
     }
   };
 
-  const saveNotificationResponse = async (notificationData: NotificationData) => {
-    try {
-      const notificationsJson = await AsyncStorage.getItem('notifications');
-      const notifications: NotificationData[] = notificationsJson 
-        ? JSON.parse(notificationsJson) 
-        : [];
-      
-      notifications.push(notificationData);
-      
-      await AsyncStorage.setItem('notifications', JSON.stringify(notifications));
-      await loadNotificationStatus();
-    } catch (error) {
-      // Silent error handling
-    }
+  // Helper function to map route names to screen names
+  const mapRouteToScreen = (routeName: string): string | null => {
+    return routeToScreenMap[routeName] || null;
   };
 
   const markScreenAsRead = async (screenName: keyof RootStackParamList) => {
@@ -82,32 +115,43 @@ const StateSelectedScreen: React.FC = () => {
       // Update last read timestamp for this screen
       const lastReadJson = await AsyncStorage.getItem('lastReadTimestamps');
       const lastRead = lastReadJson ? JSON.parse(lastReadJson) : {};
-      
+
       lastRead[screenName] = Date.now();
-      await AsyncStorage.setItem('lastReadTimestamps', JSON.stringify(lastRead));
-      
+      await AsyncStorage.setItem(
+        'lastReadTimestamps',
+        JSON.stringify(lastRead),
+      );
+
       // Mark notifications for this screen as read
       const notificationsJson = await AsyncStorage.getItem('notifications');
       if (notificationsJson) {
         const notifications: NotificationData[] = JSON.parse(notificationsJson);
         let updated = false;
-        
+
+        // Find corresponding route names for this screen
+        const routeNames = Object.entries(routeToScreenMap)
+          .filter(([_, value]) => value === screenName)
+          .map(([key, _]) => key);
+
         notifications.forEach(notification => {
-          if (notification.screen === screenName && !notification.read) {
+          if (routeNames.includes(notification.screen) && !notification.read) {
             notification.read = true;
             updated = true;
           }
         });
-        
+
         if (updated) {
-          await AsyncStorage.setItem('notifications', JSON.stringify(notifications));
+          await AsyncStorage.setItem(
+            'notifications',
+            JSON.stringify(notifications),
+          );
         }
       }
-      
+
       // Update UI
       setUnreadNotifications(prev => ({
         ...prev,
-        [screenName]: false
+        [screenName]: false,
       }));
     } catch (error) {
       // Silent error handling
@@ -154,7 +198,7 @@ const StateSelectedScreen: React.FC = () => {
           </View>
           {renderRedDot(unreadNotifications.NewsBoard)}
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           onPress={() => handleImagePress('InvoiceScreen')}
           style={styles.imageContainer}>

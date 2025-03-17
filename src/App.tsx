@@ -10,11 +10,43 @@ import Toast from 'react-native-toast-message';
 import {NavigationContainer} from '@react-navigation/native';
 import Routes from './route';
 import {NotificationProvider} from './utils/NotificationContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const App: React.FC = () => {
   const navigationRef = useRef(null);
   const [appState, setAppState] = useState(AppState.currentState);
   const [hasPermission, setHasPermission] = useState(false);
+
+  const saveNotificationToStorage = async data => {
+    try {
+      if (!data || !data.screen) return;
+
+      const notificationsJson = await AsyncStorage.getItem('notifications');
+      const notifications = notificationsJson
+        ? JSON.parse(notificationsJson)
+        : [];
+
+      // Add new notification
+      notifications.push({
+        screen: data.screen,
+        params: data.params,
+        timestamp: Date.now(),
+        read: false,
+      });
+
+      // Keep only the last 50 notifications to prevent storage bloat
+      if (notifications.length > 50) {
+        notifications.splice(0, notifications.length - 50);
+      }
+
+      await AsyncStorage.setItem(
+        'notifications',
+        JSON.stringify(notifications),
+      );
+    } catch (error) {
+      console.error('Error saving notification:', error);
+    }
+  };
 
   const checkAndRequestPermissions = async () => {
     // For Android 13 (API level 33) and above
@@ -132,6 +164,11 @@ const App: React.FC = () => {
       console.log('Notification Body:', notification?.body);
       console.log('Notification Data:', JSON.stringify(data));
 
+      // Save notification to AsyncStorage
+      if (data) {
+        await saveNotificationToStorage(data);
+      }
+
       // Update notification count based on notification type
       if (data?.notificationType) {
         updateCount(data.notificationType, 1);
@@ -197,6 +234,11 @@ const App: React.FC = () => {
         JSON.stringify(remoteMessage),
       );
       console.log('Background Notification Data:', JSON.stringify(data));
+
+      // Save notification to AsyncStorage
+      if (data) {
+        await saveNotificationToStorage(data);
+      }
 
       await messaging().displayNotification({
         title: notification?.title,
