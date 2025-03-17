@@ -24,7 +24,7 @@ interface NotificationData {
 
 // Map drawer route names to StateSelectedScreen button names
 const routeToScreenMap = {
-  RouteResourceAndGuideScreen: 'ResourceAndGuide',
+  RouteMessage: 'Messages',
   RouteNewsBoardScreen: 'NewsBoard',
   RouteInvoiceScreen: 'InvoiceScreen',
 };
@@ -32,11 +32,11 @@ const routeToScreenMap = {
 const StateSelectedScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [unreadNotifications, setUnreadNotifications] = useState<{
-    ResourceAndGuide: boolean;
+    Messages: boolean;
     NewsBoard: boolean;
     InvoiceScreen: boolean;
   }>({
-    ResourceAndGuide: false,
+    Messages: false,
     NewsBoard: false,
     InvoiceScreen: false,
   });
@@ -74,13 +74,13 @@ const StateSelectedScreen: React.FC = () => {
         const lastRead = lastReadJson
           ? JSON.parse(lastReadJson)
           : {
-              ResourceAndGuide: 0,
+              Messages: 0,
               NewsBoard: 0,
               InvoiceScreen: 0,
             };
 
         const hasUnread = {
-          ResourceAndGuide: false,
+          Messages: false,
           NewsBoard: false,
           InvoiceScreen: false,
         };
@@ -174,16 +174,16 @@ const StateSelectedScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.imageRow}>
         <TouchableOpacity
-          onPress={() => handleImagePress('ResourceAndGuide')}
+          onPress={() => handleImagePress('RouteMessage')}
           style={styles.imageContainer}>
           <View style={styles.imageWrapper}>
             <Image
               source={require('../assest/icons/dash_stat_student.png')}
               style={styles.image}
             />
-            <Text style={styles.imageText}>Resource & Guide</Text>
+            <Text style={styles.imageText}>Messages</Text>
           </View>
-          {renderRedDot(unreadNotifications.ResourceAndGuide)}
+          {renderRedDot(unreadNotifications.Messages)}
         </TouchableOpacity>
 
         <TouchableOpacity
