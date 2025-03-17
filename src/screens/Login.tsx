@@ -89,6 +89,21 @@ const LoginScreen: React.FC = () => {
         fcmToken,
       );
 
+      // Generate screen list here where response is available
+      const userScreens = getScreenList(
+        response?.user?.customPermissions || [],
+        response?.user?.role?.toLowerCase() || 'student'
+      );
+
+      console.log('getMenuTitles screens', userScreens);
+      console.log(
+        'Available Screen Names:',
+        userScreens.map(screen => screen.screenName)
+      );
+
+      // Store the screen list for use in the sidebar
+      await AsyncStorage.setItem('userScreens', JSON.stringify(userScreens));
+
       // Set the token1 and level values
       const randomNum =
         Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
@@ -102,6 +117,7 @@ const LoginScreen: React.FC = () => {
         userLevel = 'P';
       }
       await AsyncStorage.setItem('lev', userLevel);
+      console.log('loginData-->', JSON.stringify(response));
 
       // Store login data for use in other screens
       await AsyncStorage.setItem('loginData', JSON.stringify(response));
@@ -135,6 +151,301 @@ const LoginScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  function getScreenList(role_permissions: string | string[], role: string) {
+    const menuArray = [];
+
+    // Default screens (no condition, always append)
+    menuArray.push({
+      id: 1,
+      screenName: 'Dashboard',
+      screen: 'RouteDashBoardScreen',
+    });
+
+    // Check for role permissions and add corresponding screens
+    if (
+      role_permissions.includes('newsboard.list') ||
+      role_permissions.includes('newsboard.View')
+    ) {
+      menuArray.push({
+        id: 2,
+        screenName: 'News Board',
+        screen: 'RouteNewsBoardScreen',
+      });
+    }
+
+    menuArray.push({
+      id: 47,
+      screenName: 'Messages',
+      screen: 'RouteMessage',
+    });
+
+    if (role_permissions.includes('classSch.list')) {
+      menuArray.push({
+        id: 4,
+        screenName: 'Class Schedule',
+        screen: 'RouteClassSchdule',
+      });
+    }
+
+    menuArray.push({
+      id: 66,
+      screenName: 'Calendar',
+      screen: 'RouteCalender',
+    });
+
+    if (
+      role_permissions.includes('events.list') ||
+      role_permissions.includes('events.View')
+    ) {
+      menuArray.push({
+        id: 3,
+        screenName: 'Events',
+        screen: 'RouteEventsScreen',
+      });
+    }
+
+    if (role_permissions.includes('mediaCenter.View')) {
+      menuArray.push({
+        id: 22,
+        screenName: 'Media Center',
+        screen: 'RouteMediaCenter',
+      });
+    }
+
+    // Check for Student Role
+    if (role !== 'student') {
+      menuArray.push({
+        id: 17,
+        screenName: 'Students',
+        screen: 'RouteStudentScreen',
+      });
+    }
+
+    if (
+      role_permissions.includes('Invoices.list') ||
+      role_permissions.includes('Invoices.View')
+    ) {
+      menuArray.push({
+        id: 19,
+        screenName: 'Invoices',
+        screen: 'RouteInvoiceScreen',
+      });
+    }
+
+    if (role_permissions.includes('Invoices.dueInvoices')) {
+      menuArray.push({
+        id: 19,
+        screenName: 'Due Invoices',
+        screen: 'RouteDueInvoiceScreen',
+      });
+    }
+
+    if (
+      role_permissions.includes('Invoices2.list') ||
+      role_permissions.includes('Invoices2.View')
+    ) {
+      menuArray.push({
+        id: 51,
+        screenName: 'Credit Notes',
+        screen: 'RouteCreditNotesScreen',
+      });
+    }
+
+    // Role-specific Attendance logic
+    if (role === 'student') {
+      if (
+        role_permissions.includes('myAttendance.myAttendance') ||
+        role_permissions.includes('students.Attendance')
+      ) {
+        menuArray.push({
+          id: 6,
+          screenName: 'Attendance',
+          screen: 'RouteAttendenceScreen',
+        });
+      }
+    } else if (role_permissions.includes('parent')) {
+      if (
+        role_permissions.includes('myAttendance.myAttendance') ||
+        role_permissions.includes('students.Attendance')
+      ) {
+        menuArray.push({
+          id: 7,
+          screenName: 'Attendance',
+          screen: 'RouteAttendenceScreen',
+        });
+      }
+    } else {
+      if (role_permissions.includes('Attendance.takeAttendance')) {
+        menuArray.push({
+          id: 8,
+          screenName: 'Attendance',
+          screen: 'RouteAttendenceScreen',
+        });
+      }
+    }
+
+    // Admin-specific
+    if (role === 'admin') {
+      menuArray.push({
+        id: 9,
+        screenName: 'Staff Attendance',
+        screen: 'RouteAttendenceScreen', // Assuming this uses the same screen
+      });
+    }
+
+    if (role_permissions.includes('parents.list')) {
+      menuArray.push({
+        id: 18,
+        screenName: 'Parents',
+        screen: 'RouteParentsScreen',
+      });
+    }
+
+    if (role_permissions.includes('teachers.list')) {
+      menuArray.push({
+        id: 16,
+        screenName: 'Teachers',
+        screen: 'RouteTeachersScreen',
+      });
+    }
+
+    if (role_permissions.includes('Library.list')) {
+      menuArray.push({
+        id: 10,
+        screenName: 'Books Library',
+        screen: 'RouteBooksLibraryScreen',
+      });
+    }
+
+    if (role_permissions.includes('staticPages.list')) {
+      menuArray.push({
+        id: 5,
+        screenName: 'Static Pages',
+        screen: 'RouteResourceAndGuideScreen', // Assuming this is the equivalent
+      });
+    }
+
+    if (
+      role_permissions.includes('Homework.list') ||
+      role_permissions.includes('Homework.View')
+    ) {
+      menuArray.push({
+        id: 40,
+        screenName: 'Homework',
+        screen: 'RouteHomeworkScreen',
+      });
+    }
+
+    if (role_permissions.includes('Assignments.list')) {
+      menuArray.push({
+        id: 11,
+        screenName: 'Assignments',
+        screen: 'RouteAssigmentScreen',
+      });
+    }
+
+    if (role_permissions.includes('studyMaterial.list')) {
+      menuArray.push({
+        id: 12,
+        screenName: 'Study Material',
+        screen: 'RouteResourceAndGuideScreen', // Assuming this is the equivalent
+      });
+    }
+
+    if (
+      role_permissions.includes('examsList.list') ||
+      role_permissions.includes('examsList.View')
+    ) {
+      menuArray.push({
+        id: 13,
+        screenName: 'Exams List',
+        screen: 'ExamList',
+      });
+    }
+
+    if (role_permissions.includes('onlineExams.list')) {
+      menuArray.push({
+        id: 15,
+        screenName: 'Online Exams',
+        screen: 'OnlineExam',
+      });
+    }
+
+    if (role_permissions.includes('Hostel.list')) {
+      menuArray.push({
+        id: 21,
+        screenName: 'Hostel',
+        screen: 'RouteHostelScreen',
+      });
+    }
+
+    if (role_permissions.includes('classes.list')) {
+      menuArray.push({
+        id: 23,
+        screenName: 'Classes',
+        screen: 'RouteGradeLevelScreen', // Based on DrawerRoutes.tsx
+      });
+      menuArray.push({
+        id: 48,
+        screenName: 'Class',
+        screen: 'RouteClassScreen',
+      });
+    }
+
+    if (role_permissions.includes('Transportation.list')) {
+      menuArray.push({
+        id: 20,
+        screenName: 'Transportation',
+        screen: 'RouteTransportScreen',
+      });
+    }
+
+    if (role_permissions.includes('Subjects.list')) {
+      menuArray.push({
+        id: 24,
+        screenName: 'Subjects',
+        screen: 'RouteSubjectsScreen',
+      });
+    }
+
+    // Add Year screen for admin
+    if (role === 'admin') {
+      menuArray.push({
+        id: 50,
+        screenName: 'Year',
+        screen: 'RouteYearScreen',
+      });
+    }
+
+    // Add Resource & Guide for all
+    menuArray.push({
+      id: 25,
+      screenName: 'Resource & Guide',
+      screen: 'RouteResourceAndGuideScreen',
+    });
+
+    // Always include the Logout option
+    menuArray.push({
+      id: 26,
+      screenName: 'Logout',
+      screen: 'Logout', // Special handling in the sidebar
+    });
+
+    console.log('Menu Array List:', menuArray);
+    return menuArray;
+  }
+
+  // const userScreens = getScreenList(
+  //   response?.roles[0].role_permissions,
+  //   response?.roles[0].def_for,
+  // );
+
+  // console.log('getMenuTitles screens', userScreens);
+  // console.log(
+  //   'Available Screen Names:',
+  //   userScreens.map(screen => screen.screenName),
+  // );
 
   return (
     <KeyboardAvoidingView
