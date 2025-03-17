@@ -9,7 +9,7 @@ import messaging from '@react-native-firebase/messaging';
 import Toast from 'react-native-toast-message';
 import {NavigationContainer} from '@react-navigation/native';
 import Routes from './route';
-import { NotificationProvider } from './utils/NotificationContext';
+import {NotificationProvider} from './utils/NotificationContext';
 
 const App: React.FC = () => {
   const navigationRef = useRef(null);
@@ -123,6 +123,15 @@ const App: React.FC = () => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       const {notification, data} = remoteMessage;
 
+      // Log the entire notification payload
+      console.log(
+        'Foreground Notification Received:',
+        JSON.stringify(remoteMessage),
+      );
+      console.log('Notification Title:', notification?.title);
+      console.log('Notification Body:', notification?.body);
+      console.log('Notification Data:', JSON.stringify(data));
+
       // Update notification count based on notification type
       if (data?.notificationType) {
         updateCount(data.notificationType, 1);
@@ -138,7 +147,33 @@ const App: React.FC = () => {
           autoHide: true,
           onPress: () => {
             if (data?.screen) {
-              navigationRef.current?.navigate(data.screen, data.params);
+              console.log(
+                'Navigating to screen:',
+                data.screen,
+                'with params:',
+                data.params,
+              );
+
+              // Parse the params if they're a string
+              let params = data.params;
+              if (typeof params === 'string') {
+                try {
+                  params = JSON.parse(params);
+                } catch (e) {
+                  console.log('Error parsing params:', e);
+                }
+              }
+
+              // Navigate to DrawerRoutes first if needed
+              if (data.screen.startsWith('Route')) {
+                navigationRef.current?.navigate('DrawerRoutes', {
+                  screen: data.screen,
+                  params: params,
+                });
+              } else {
+                navigationRef.current?.navigate(data.screen, params);
+              }
+
               // Reset count when notification is pressed
               resetCount(data.notificationType);
             }
@@ -149,12 +184,19 @@ const App: React.FC = () => {
 
     return unsubscribe;
   }, [appState, hasPermission]);
+
   // Enhanced background notification handling
   useEffect(() => {
     if (!hasPermission) return;
 
     messaging().setBackgroundMessageHandler(async remoteMessage => {
       const {notification, data} = remoteMessage;
+
+      console.log(
+        'Background Notification Received:',
+        JSON.stringify(remoteMessage),
+      );
+      console.log('Background Notification Data:', JSON.stringify(data));
 
       await messaging().displayNotification({
         title: notification?.title,
@@ -180,11 +222,37 @@ const App: React.FC = () => {
 
     // Handle notification open event
     messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log('Notification opened app:', JSON.stringify(remoteMessage));
+      console.log(
+        'Notification opened app data:',
+        JSON.stringify(remoteMessage.data),
+      );
+
       if (remoteMessage.data?.screen) {
-        navigationRef.current?.navigate(
+        console.log(
+          'Navigating to screen from opened notification:',
           remoteMessage.data.screen,
-          remoteMessage.data.params,
         );
+
+        // Parse the params if they're a string
+        let params = remoteMessage.data.params;
+        if (typeof params === 'string') {
+          try {
+            params = JSON.parse(params);
+          } catch (e) {
+            console.log('Error parsing params:', e);
+          }
+        }
+
+        // Navigate to DrawerRoutes first if needed
+        if (remoteMessage.data.screen.startsWith('Route')) {
+          navigationRef.current?.navigate('DrawerRoutes', {
+            screen: remoteMessage.data.screen,
+            params: params,
+          });
+        } else {
+          navigationRef.current?.navigate(remoteMessage.data.screen, params);
+        }
       }
     });
 
@@ -192,11 +260,45 @@ const App: React.FC = () => {
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
-        if (remoteMessage?.data?.screen) {
-          navigationRef.current?.navigate(
-            remoteMessage.data.screen,
-            remoteMessage.data.params,
+        if (remoteMessage) {
+          console.log(
+            'App opened from quit state notification:',
+            JSON.stringify(remoteMessage),
           );
+          console.log(
+            'Initial notification data:',
+            JSON.stringify(remoteMessage.data),
+          );
+
+          if (remoteMessage.data?.screen) {
+            console.log(
+              'Navigating to initial screen:',
+              remoteMessage.data.screen,
+            );
+
+            // Parse the params if they're a string
+            let params = remoteMessage.data.params;
+            if (typeof params === 'string') {
+              try {
+                params = JSON.parse(params);
+              } catch (e) {
+                console.log('Error parsing params:', e);
+              }
+            }
+
+            // Navigate to DrawerRoutes first if needed
+            if (remoteMessage.data.screen.startsWith('Route')) {
+              navigationRef.current?.navigate('DrawerRoutes', {
+                screen: remoteMessage.data.screen,
+                params: params,
+              });
+            } else {
+              navigationRef.current?.navigate(
+                remoteMessage.data.screen,
+                params,
+              );
+            }
+          }
         }
       });
   }, [hasPermission]);
