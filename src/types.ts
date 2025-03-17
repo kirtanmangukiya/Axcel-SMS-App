@@ -119,6 +119,23 @@ export type RootStackParamList = {
   HomeWork: {results: any[]};
 
   InvoiceScreen: undefined;
+  StripePayment: {
+    amount: number;
+    currency?: string;
+    description?: string;
+    invoiceId: string | number;
+    studentId: string | number;
+    paymentTitle: string;
+  };
+
+  PaymentReceipt: {
+    paymentId: string;
+    amount: number;
+    currency: string;
+    date: string | number;
+    invoiceId: string | number;
+    paymentTitle: string;
+  };
 };
 export type SplashProps = NativeStackScreenProps<MainStackParamList, 'Splash'>;
 export type HomeStackParamList = {

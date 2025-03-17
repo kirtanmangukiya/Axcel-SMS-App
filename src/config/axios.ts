@@ -905,12 +905,220 @@ export async function studentAssignmentAddedData(
   }
 }
 
+export async function getStripeConfig(): Promise<{
+  stripeEnabled: boolean;
+  stripePublishableKey: string;
+  stripeSecretKey: string;
+}> {
+  try {
+    if (!AUTH_TOKEN) {
+      await initializeAuthToken();
+    }
+
+    if (!AUTH_TOKEN) {
+      throw new Error('AUTH_TOKEN is not available');
+    }
+
+    const response = await fetch(`${BASE_URL}stripe/status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Network response was not ok: ${errorText}`);
+    }
+
+    const text = await response.text();
+    let data;
+
+    if (text.trim() !== '') {
+      try {
+        const rawData = JSON.parse(text);
+        data = {
+          stripeEnabled: rawData.stripe_enabled || false,
+          stripePublishableKey: rawData.stripe_publishable_key || '',
+          stripeSecretKey: rawData.stripe_secret_key || '',
+        };
+      } catch (jsonError) {
+        throw new Error('JSON parse error');
+      }
+    } else {
+      throw new Error('Empty response received');
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Get Stripe config failed: ${error.message}`);
+    } else {
+      throw new Error('An unknown error occurred');
+    }
+  }
+}
+
+export async function createPaymentIntentData(
+  amount: number,
+  currency: string,
+  description: string,
+  invoiceId: string | number,
+  studentId: string | number,
+): Promise<{
+  clientSecret: string;
+  paymentIntentId: string;
+  paymentEnabled?: boolean;
+}> {
+  try {
+    if (!AUTH_TOKEN) {
+      await initializeAuthToken();
+    }
+
+    if (!AUTH_TOKEN) {
+      throw new Error('AUTH_TOKEN is not available');
+    }
+
+    const requestBody = {
+      amount: amount * 100,
+      currency: currency,
+      description: description,
+      invoiceId: invoiceId,
+      studentId: studentId,
+    };
+
+    const response = await fetch(`${BASE_URL}api/payment-intent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Network response was not ok: ${errorText}`);
+    }
+
+    const text = await response.text();
+    let rawData;
+    let data: {
+      clientSecret: string;
+      paymentIntentId: string;
+      paymentEnabled?: boolean;
+    };
+
+    if (text.trim() !== '') {
+      try {
+        rawData = JSON.parse(text);
+
+        // Check if payment is disabled by admin
+        if (rawData.payment === false) {
+          return {
+            clientSecret: rawData.client_secret || '',
+            paymentIntentId: '',
+            paymentEnabled: false,
+          };
+        }
+
+        // Handle different response formats
+        data = {
+          clientSecret: rawData.clientSecret || rawData.client_secret || '',
+          paymentIntentId:
+            rawData.paymentIntentId ||
+            rawData.payment_intent_id ||
+            (rawData.client_secret
+              ? rawData.client_secret.split('_secret_')[0]
+              : ''),
+          paymentEnabled: rawData.payment !== false,
+        };
+
+        if (!data.clientSecret) {
+          throw new Error('Missing client secret in server response');
+        }
+
+        if (
+          !data.paymentIntentId &&
+          data.clientSecret &&
+          data.clientSecret.includes('_secret_')
+        ) {
+          data.paymentIntentId = data.clientSecret.split('_secret_')[0];
+        }
+      } catch (jsonError) {
+        throw new Error(`JSON parse error: ${jsonError.message}`);
+      }
+    } else {
+      throw new Error('Empty response received');
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Create payment intent failed: ${error.message}`);
+    } else {
+      throw new Error('An unknown error occurred');
+    }
+  }
+}
+
+export async function updatePaymentStatus(
+  invoiceId: string | number,
+  status: number = 1,
+): Promise<boolean> {
+  try {
+    if (!AUTH_TOKEN) {
+      await initializeAuthToken();
+    }
+
+    if (!AUTH_TOKEN) {
+      throw new Error('AUTH_TOKEN is not available');
+    }
+
+    const response = await fetch(
+      `${BASE_URL}api/payment-status/${invoiceId}/${status}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Network response was not ok: ${errorText}`);
+    }
+
+    const text = await response.text();
+
+    if (!text || text.trim() === '') {
+      return true;
+    }
+
+    try {
+      const data = JSON.parse(text);
+      return data?.success ? true : false;
+    } catch (jsonError) {
+      return response.ok;
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Update payment status failed: ${error.message}`);
+    } else {
+      throw new Error('An unknown error occurred');
+    }
+  }
+}
+
 export async function secitonDaysData(id: number): Promise<ScheduleData> {
   console.log('--------------------------------', id);
 
   try {
     if (!AUTH_TOKEN) {
-      await initializeAuthToken(); // Ensure this function sets AUTH_TOKEN
+      await initializeAuthToken();
     }
 
     if (!AUTH_TOKEN) {

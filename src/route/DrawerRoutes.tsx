@@ -43,6 +43,8 @@ import SideBarStudent from '../components/side_bar/SideBarStudent';
 import SideBarTeacher from '../components/side_bar/SideBarTeacher';
 import SplashScreen from '../screens/SplashScreen';
 import {createDrawerNavigator} from '@react-navigation/drawer';
+import StripePaymentComponent from '../screens/stripePayment/StripePaymentComponent';
+import PaymentReceiptComponent from '../screens/stripePayment/PaymentReceiptComponent';
 
 const Drawer = createDrawerNavigator<MainStackParamList>();
 
@@ -145,7 +147,7 @@ const DrawerRoutes: React.FC<DrawerRoutesProps> = ({route}) => {
       <Drawer.Screen name="Login" component={LoginScreen} />
 
       <Drawer.Screen name="Splash" component={SplashScreen} />
-      
+
       <Drawer.Screen
         name="RouteResourceAndGuideScreen"
         component={RouteResourceAndGuideScreen}
@@ -157,7 +159,16 @@ const DrawerRoutes: React.FC<DrawerRoutesProps> = ({route}) => {
       {/* <Drawer.Screen name="ShowDataScreen" component={ShowDataScreen} /> */}
       <Drawer.Screen name="RouteCalender" component={RouteCalender} />
       <Drawer.Screen name="RouteMediaCenter" component={RouteMediaCenter} />
-     
+      <Drawer.Screen
+        name="StripePayment"
+        component={StripePaymentComponent}
+        options={{drawerLabel: () => null}} // Hide from drawer menu
+      />
+      <Drawer.Screen
+        name="PaymentReceipt"
+        component={PaymentReceiptComponent}
+        options={{drawerLabel: () => null}} // Hide from drawer menu
+      />
     </Drawer.Navigator>
   );
 };

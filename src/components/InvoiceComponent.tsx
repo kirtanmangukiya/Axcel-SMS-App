@@ -36,7 +36,6 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
   const [selectedDocId, setSelectedDocId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // console.log('invoice data compoent ', data);
   const handleViewDoc = useCallback(
     async fileName => {
       try {
@@ -45,8 +44,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         const filePath = `${base_url}/${fileName}`;
         console.log('file path ', filePath);
         console.log('file name: ', fileName);
-        
-  
+
         if (fileExtension === 'pdf') {
           navigation.navigate('PdfShowComponent', {pdfUrl: fileName});
         } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
@@ -56,26 +54,25 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
             text1: 'Opening image',
             text2: 'Please wait...',
           });
-          
+
           setLoading(true);
           const {dirs} = RNFetchBlob.fs;
           const localPath = `${dirs.DocumentDir}/${fileName}`;
-          
+
           const res = await RNFetchBlob.config({
             fileCache: true,
             path: localPath,
-            appendExt: fileExtension
+            appendExt: fileExtension,
           }).fetch('GET', filePath);
-  
+
           await FileViewer.open(res.path(), {
             showOpenWithDialog: true,
             displayName: fileName,
           });
-  
+
           // Cleanup temp file after delay
           setTimeout(() => {
-            RNFetchBlob.fs.unlink(localPath)
-              .catch(() => {});
+            RNFetchBlob.fs.unlink(localPath).catch(() => {});
           }, 10000);
         }
       } catch (error) {
@@ -83,7 +80,7 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
           Toast.show({
             type: 'error',
             text1: 'Error',
-            text2: 'Failed to open file'
+            text2: 'Failed to open file',
           });
         }
       } finally {
@@ -93,13 +90,6 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     },
     [navigation],
   );
-
-  // const handleViewDoc = useCallback(
-  //   async fileName => {
-  //     navigation.navigate('PdfShowComponent', {pdfUrl: '661c9af674843.pdf'});
-  //   },
-  //   [navigation],
-  // );
 
   const handleFullView = useCallback(
     async fileName => {
@@ -150,55 +140,28 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     try {
       // Log before making the API call
       console.log('Preparing request with data:', {
-        // parentId: 770,
         studentId: data?.studentId,
         invoiceId: data?.id,
       });
 
-      const response = await fetch(
-        'https://sms.psleprimary.com/api/process-payment',
-        {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            // parentId: 770,
-            studentId: data?.studentId,
-            invoiceId: data?.id, // or another relevant ID
-          }),
-        },
-      );
-
-      console.log('API request sent. Awaiting response...');
-
-      const responseData = await response.json();
-
-      // Log the response data
-      console.log('Response received:', responseData);
-
-      setLoading(false);
-
-      if (responseData.sessionUrl) {
-        console.log(
-          'Navigating to WebViewComponent with URL:',
-          responseData.sessionUrl,
-        );
-        navigation.navigate('WebViewComponent', {url: responseData.sessionUrl});
-      } else {
-        console.log(
-          'No sessionUrl in response. Showing alert with response data.',
-        );
-        Alert.alert(
-          'Payment Processed',
-          `Response: ${JSON.stringify(responseData)}`,
-        );
-      }
+      // Navigate directly to StripePayment instead of using the process-payment endpoint
+      navigation.navigate('StripePayment', {
+        amount: data?.invoicePyaments?.[0]?.paymentAmount,
+        currency: 'usd',
+        description: data?.invoicePyaments?.[0]?.paymentDescription,
+        invoiceId: data?.id,
+        studentId: data?.studentId,
+        paymentTitle: data?.invoicePyaments?.[0]?.paymentTitle,
+      });
     } catch (error) {
       setLoading(false);
       // Log the error if any
       console.error('API Error:', error);
       Alert.alert('Error', 'Failed to process payment');
+    } finally {
+      setLoading(false);
     }
-  }, [navigation]);
+  }, [navigation, data]);
 
   const handleDeleteDoc = useCallback(async () => {
     if (!selectedDocId) return;
@@ -284,11 +247,6 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
     );
   }
 
-  const funcConsole = () => {
-    console.log('Hello', data);
-  };
-
-  // console.log(data?.id);
   const imageUrl = `https://axcel.schoolmgmtsys.com/dashboard/profileImage/${data?.id}`;
 
   return (
@@ -309,7 +267,6 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
         </Text>
         <View style={styles.studentSection}>
           <Image
-            // source={require('../assest/icons/download.jpg')}
             source={
               data?.id
                 ? {uri: imageUrl}
@@ -353,12 +310,6 @@ const InvoiceComponent = ({data, onInvoiceChange}) => {
             </Text>
           </TouchableOpacity>
         </View>
-        {/* <View style={styles.paidContainer}>
-          <Text style={styles.paidLabel}>PAID:</Text>
-          <Text style={styles.paid}>
-            {data?.invoicePyaments?.[0]?.paidAmount}
-          </Text>
-        </View> */}
         <View style={styles.amountContainer}>
           <View
             style={{
@@ -526,10 +477,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-
-    // borderRadius: 10,
-    // marginBottom: 5,
-    // padding: 8,
   },
   amountText: {
     color: '#fff',
@@ -573,7 +520,6 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#d9534f',
     paddingVertical: 10,
-    // paddingHorizontal: 1,
     borderRadius: 17,
     marginTop: 10,
     width: '75%',
