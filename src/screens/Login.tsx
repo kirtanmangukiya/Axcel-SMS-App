@@ -91,14 +91,14 @@ const LoginScreen: React.FC = () => {
 
       // Generate screen list here where response is available
       const userScreens = getScreenList(
-        response?.user?.customPermissions || [],
-        response?.user?.role?.toLowerCase() || 'student'
+        response?.roles[0].role_permissions,
+        response?.roles[0].def_for,
       );
 
       console.log('getMenuTitles screens', userScreens);
       console.log(
         'Available Screen Names:',
-        userScreens.map(screen => screen.screenName)
+        userScreens.map(screen => screen.screenName),
       );
 
       // Store the screen list for use in the sidebar
